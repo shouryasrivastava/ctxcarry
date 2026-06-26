@@ -1,0 +1,52 @@
+{
+  "name": "@shouryasrivastava/handoff",
+  "version": "0.3.0",
+  "description": "Portable project memory and handoff context for AI coding agents.",
+  "type": "module",
+  "bin": {
+    "handoff": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm run build && node --test tests/*.test.mjs",
+    "smoke": "pnpm run build && node dist/cli.js --help",
+    "bench": "pnpm run build && node --import tsx bench/report.ts",
+    "bench:compression": "pnpm run build && node --import tsx bench/compression.bench.ts",
+    "bench:recall": "pnpm run build && node --import tsx bench/recall.bench.ts",
+    "bench:e2e": "pnpm run build && node --import tsx bench/e2e.bench.ts",
+    "bench:real": "pnpm run build && node --import tsx bench/real-sessions.ts",
+    "bench:continuation": "pnpm run build && node --import tsx bench/continuation.ts"
+  },
+  "keywords": [
+    "ai",
+    "coding-agents",
+    "handoff",
+    "claude-code",
+    "codex",
+    "claude",
+    "context",
+    "agent-memory",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/shouryasrivastava/handoff#readme",
+  "bugs": {
+    "url": "https://github.com/shouryasrivastava/handoff/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shouryasrivastava/handoff.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.5.0"
+  }
+}

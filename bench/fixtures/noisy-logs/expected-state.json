@@ -1,0 +1,9 @@
+{
+  "currentTask": "Fix websocket reconnect loop",
+  "touchedFiles": ["src/ws/client.ts", "src/ws/backoff.ts", "tests/ws/reconnect.test.ts"],
+  "decisions": ["Keep exponential backoff jitter"],
+  "constraints": ["Do not change public websocket client API"],
+  "failures": ["reconnect.test.ts times out after 5000ms"],
+  "lastCommands": ["pnpm test tests/ws/reconnect.test.ts"],
+  "nextSteps": ["Reset reconnect timer after successful open event"]
+}

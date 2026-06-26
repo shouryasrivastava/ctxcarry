@@ -1,0 +1,10 @@
+{"type":"note","timestamp":"2026-06-26T15:00:00.000Z","noteType":"task","content":"Complete project search indexing migration"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T15:01:00.000Z","agent":"claude","branch":"index/migration","isRepo":true,"status":[" M src/index/search-index.ts"," M src/index/file-walker.ts"," M tests/index/search-index.test.ts"],"changedFiles":["src/index/search-index.ts","src/index/file-walker.ts","tests/index/search-index.test.ts"],"diffStat":"3 files changed, 210 insertions(+), 81 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T15:02:00.000Z","noteType":"decision","content":"Do not replace the lexical index with embeddings in v0.1"}
+{"type":"note","timestamp":"2026-06-26T15:03:00.000Z","noteType":"decision","content":"Keep index files local-only"}
+{"type":"note","timestamp":"2026-06-26T15:04:00.000Z","noteType":"constraint","content":"Ignore node_modules, dist, build, and .next"}
+{"type":"command_run","timestamp":"2026-06-26T15:05:00.000Z","command":"pnpm test tests/index/search-index.test.ts","status":"failed","summary":"search-index.test.ts fails because ignored files are still indexed"}
+{"type":"note","timestamp":"2026-06-26T15:06:00.000Z","noteType":"failure","content":"TypeScript error in file-walker.ts is fixed"}
+{"type":"note","timestamp":"2026-06-26T15:07:00.000Z","noteType":"resolved","content":"TypeScript error in file-walker.ts is fixed"}
+{"type":"command_run","timestamp":"2026-06-26T15:08:00.000Z","command":"pnpm run build","status":"passed","summary":"Build passed"}
+{"type":"note","timestamp":"2026-06-26T15:09:00.000Z","noteType":"next","content":"Apply ignore matcher before adding files to the index"}

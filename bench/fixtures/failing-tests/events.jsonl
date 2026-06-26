@@ -1,0 +1,8 @@
+{"type":"note","timestamp":"2026-06-26T10:00:00.000Z","noteType":"task","content":"Fix invoice total regression"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T10:01:00.000Z","agent":"claude","branch":"fix/invoice-total","isRepo":true,"status":[" M src/billing/invoice.ts"," M src/billing/tax.ts"," M tests/billing/invoice.test.ts"],"changedFiles":["src/billing/invoice.ts","src/billing/tax.ts","tests/billing/invoice.test.ts"],"diffStat":"3 files changed, 41 insertions(+), 19 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T10:02:00.000Z","noteType":"decision","content":"Keep rounding behavior compatible with existing invoices"}
+{"type":"note","timestamp":"2026-06-26T10:03:00.000Z","noteType":"constraint","content":"Do not change persisted invoice schema"}
+{"type":"command_run","timestamp":"2026-06-26T10:04:00.000Z","command":"pnpm test tests/billing/invoice.test.ts","status":"failed","summary":"invoice.test.ts expects total 1099 but received 1100"}
+{"type":"note","timestamp":"2026-06-26T10:05:00.000Z","noteType":"failure","content":"Tax calculation rounds per line item instead of invoice total"}
+{"type":"command_run","timestamp":"2026-06-26T10:06:00.000Z","command":"pnpm test tests/billing/tax.test.ts","status":"passed","summary":"Tax tests passed"}
+{"type":"note","timestamp":"2026-06-26T10:07:00.000Z","noteType":"next","content":"Move rounding to final invoice total calculation"}

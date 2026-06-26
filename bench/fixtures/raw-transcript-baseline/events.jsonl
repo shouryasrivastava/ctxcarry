@@ -1,0 +1,6 @@
+{"type":"note","timestamp":"2026-06-26T18:00:00.000Z","noteType":"task","content":"Fix markdown export losing tables"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T18:01:00.000Z","agent":"claude","branch":"fix/markdown-tables","isRepo":true,"status":[" M src/reports/render.ts"," M src/reports/markdown.ts"," M tests/reports/export.test.ts"],"changedFiles":["src/reports/render.ts","src/reports/markdown.ts","tests/reports/export.test.ts"],"diffStat":"3 files changed, 96 insertions(+), 31 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T18:02:00.000Z","noteType":"decision","content":"Keep HTML export behavior unchanged"}
+{"type":"note","timestamp":"2026-06-26T18:03:00.000Z","noteType":"constraint","content":"Do not add a markdown dependency"}
+{"type":"command_run","timestamp":"2026-06-26T18:04:00.000Z","command":"pnpm test tests/reports/export.test.ts","status":"failed","summary":"export.test.ts fails because pipe table rows are omitted"}
+{"type":"note","timestamp":"2026-06-26T18:05:00.000Z","noteType":"next","content":"Serialize table rows in markdown.ts"}

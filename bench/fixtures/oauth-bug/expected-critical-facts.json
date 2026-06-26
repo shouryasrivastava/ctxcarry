@@ -1,0 +1,8 @@
+[
+  "Fix Google OAuth redirect bug",
+  "lib/auth/google.ts",
+  "app/api/auth/callback/route.ts",
+  "Do not rewrite the auth provider",
+  "Production OAuth callback returns 400",
+  "Check redirect URI construction"
+]

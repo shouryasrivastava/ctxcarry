@@ -1,0 +1,9 @@
+{
+  "currentTask": "Fix markdown export losing tables",
+  "touchedFiles": ["src/reports/render.ts", "src/reports/markdown.ts", "tests/reports/export.test.ts"],
+  "decisions": ["Keep HTML export behavior unchanged"],
+  "constraints": ["Do not add a markdown dependency"],
+  "failures": ["export.test.ts fails because pipe table rows are omitted"],
+  "lastCommands": ["pnpm test tests/reports/export.test.ts"],
+  "nextSteps": ["Serialize table rows in markdown.ts"]
+}

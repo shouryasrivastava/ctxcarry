@@ -1,0 +1,9 @@
+{
+  "currentTask": "Fix checkout retry test flake",
+  "touchedFiles": ["src/checkout/retry.ts", "src/checkout/client.ts", "tests/checkout/retry.test.ts"],
+  "decisions": ["Keep retry count at three attempts"],
+  "constraints": ["Do not change payment provider API shape"],
+  "failures": ["expected retry count 3 received 1"],
+  "lastCommands": ["pnpm test tests/checkout/retry.test.ts"],
+  "nextSteps": ["Advance fake timers after scheduling retry delay"]
+}

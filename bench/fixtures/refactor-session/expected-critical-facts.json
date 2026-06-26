@@ -1,0 +1,7 @@
+[
+  "Refactor command parser into a reusable module",
+  "src/parser.ts",
+  "Keep CLI argument behavior backward compatible",
+  "parser.test.ts fails for repeated flags",
+  "Add support for repeated flag arrays in parser.ts"
+]

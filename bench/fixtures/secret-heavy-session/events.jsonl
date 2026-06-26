@@ -1,0 +1,7 @@
+{"type":"note","timestamp":"2026-06-26T17:00:00.000Z","noteType":"task","content":"Remove leaked credentials from auth test logs"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T17:01:00.000Z","agent":"claude","branch":"security/redaction","isRepo":true,"status":[" M lib/auth/env.ts"," M tests/auth/redaction.test.ts"],"changedFiles":["lib/auth/env.ts","tests/auth/redaction.test.ts"],"diffStat":"2 files changed, 64 insertions(+), 18 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T17:02:00.000Z","noteType":"decision","content":"Redact secrets before writing events"}
+{"type":"note","timestamp":"2026-06-26T17:03:00.000Z","noteType":"constraint","content":"Do not remove useful error labels"}
+{"type":"command_run","timestamp":"2026-06-26T17:04:00.000Z","command":"pnpm test tests/auth/redaction.test.ts","status":"failed","summary":"redaction.test.ts fails because DATABASE_URL=postgres://user:pass@host/db appears in state.md"}
+{"type":"note","timestamp":"2026-06-26T17:05:00.000Z","noteType":"failure","content":"OPENAI_API_KEY=sk-test-123 appeared in events.jsonl before redaction"}
+{"type":"note","timestamp":"2026-06-26T17:06:00.000Z","noteType":"next","content":"Apply redaction recursively before appending events"}

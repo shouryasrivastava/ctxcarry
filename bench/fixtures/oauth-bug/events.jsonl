@@ -1,0 +1,9 @@
+{"type":"note","timestamp":"2026-06-26T09:00:00.000Z","noteType":"task","content":"Fix Google OAuth redirect bug"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T09:01:00.000Z","agent":"claude","branch":"fix/oauth-redirect","isRepo":true,"status":[" M lib/auth/google.ts"," M app/api/auth/callback/route.ts"],"changedFiles":["lib/auth/google.ts","app/api/auth/callback/route.ts"],"diffStat":"2 files changed, 18 insertions(+), 6 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T09:02:00.000Z","agent":"claude","noteType":"decision","content":"Do not rewrite the auth provider"}
+{"type":"note","timestamp":"2026-06-26T09:03:00.000Z","agent":"claude","noteType":"constraint","content":"Do not change session cookie format"}
+{"type":"note","timestamp":"2026-06-26T09:04:00.000Z","agent":"claude","noteType":"constraint","content":"Preserve existing email login behavior"}
+{"type":"note","timestamp":"2026-06-26T09:05:00.000Z","agent":"claude","noteType":"failure","content":"Production OAuth callback returns 400"}
+{"type":"command_run","timestamp":"2026-06-26T09:06:00.000Z","agent":"claude","command":"pnpm test auth","status":"failed","summary":"session.test.ts fails because session token is undefined"}
+{"type":"command_run","timestamp":"2026-06-26T09:07:00.000Z","agent":"claude","command":"pnpm lint","status":"passed","summary":"Lint passed"}
+{"type":"note","timestamp":"2026-06-26T09:08:00.000Z","agent":"claude","noteType":"next","content":"Check redirect URI construction"}

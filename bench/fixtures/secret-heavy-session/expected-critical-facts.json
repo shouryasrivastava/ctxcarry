@@ -1,0 +1,7 @@
+[
+  "Remove leaked credentials from auth test logs",
+  "lib/auth/env.ts",
+  "Do not remove useful error labels",
+  "redaction.test.ts fails because DATABASE_URL=[REDACTED] appears in state.md",
+  "Apply redaction recursively before appending events"
+]

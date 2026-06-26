@@ -1,0 +1,11 @@
+{"type":"note","timestamp":"2026-06-26T16:00:00.000Z","noteType":"task","content":"Reduce dashboard query latency"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T16:01:00.000Z","agent":"claude","branch":"perf/dashboard-query","isRepo":true,"status":[" M app/dashboard/page.tsx"," M lib/db/dashboard-query.ts"," M lib/cache/dashboard-cache.ts"," M tests/dashboard/query.test.ts"],"changedFiles":["app/dashboard/page.tsx","lib/db/dashboard-query.ts","lib/cache/dashboard-cache.ts","tests/dashboard/query.test.ts"],"diffStat":"4 files changed, 840 insertions(+), 510 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T16:02:00.000Z","noteType":"decision","content":"Keep the existing dashboard route"}
+{"type":"note","timestamp":"2026-06-26T16:03:00.000Z","noteType":"decision","content":"Do not add Redis for v0.1"}
+{"type":"note","timestamp":"2026-06-26T16:04:00.000Z","noteType":"decision","content":"Reuse the existing in-memory cache helper"}
+{"type":"note","timestamp":"2026-06-26T16:05:00.000Z","noteType":"constraint","content":"Preserve tenant isolation"}
+{"type":"note","timestamp":"2026-06-26T16:06:00.000Z","noteType":"constraint","content":"Do not change analytics event names"}
+{"type":"note","timestamp":"2026-06-26T16:07:00.000Z","noteType":"constraint","content":"Keep the query API return shape stable"}
+{"type":"command_run","timestamp":"2026-06-26T16:08:00.000Z","command":"pnpm test tests/dashboard/query.test.ts","status":"failed","summary":"query.test.ts fails because tenant filter is missing from cached query key"}
+{"type":"command_run","timestamp":"2026-06-26T16:09:00.000Z","command":"pnpm test tests/dashboard/query.test.ts","status":"failed","summary":"query.test.ts fails because tenant filter is missing from cached query key"}
+{"type":"note","timestamp":"2026-06-26T16:10:00.000Z","noteType":"next","content":"Include tenant id in dashboard cache key"}

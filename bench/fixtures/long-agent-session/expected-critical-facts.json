@@ -1,0 +1,7 @@
+[
+  "Complete project search indexing migration",
+  "src/index/search-index.ts",
+  "Ignore node_modules, dist, build, and .next",
+  "search-index.test.ts fails because ignored files are still indexed",
+  "Apply ignore matcher before adding files to the index"
+]

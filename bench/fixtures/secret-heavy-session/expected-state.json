@@ -1,0 +1,9 @@
+{
+  "currentTask": "Remove leaked credentials from auth test logs",
+  "touchedFiles": ["lib/auth/env.ts", "tests/auth/redaction.test.ts"],
+  "decisions": ["Redact secrets before writing events"],
+  "constraints": ["Do not remove useful error labels"],
+  "failures": ["redaction.test.ts fails because DATABASE_URL=[REDACTED] appears in state.md", "OPENAI_API_KEY=[REDACTED] appeared in events.jsonl before redaction"],
+  "lastCommands": ["pnpm test tests/auth/redaction.test.ts"],
+  "nextSteps": ["Apply redaction recursively before appending events"]
+}

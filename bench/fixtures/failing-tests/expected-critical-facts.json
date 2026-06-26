@@ -1,0 +1,7 @@
+[
+  "Fix invoice total regression",
+  "src/billing/invoice.ts",
+  "Do not change persisted invoice schema",
+  "invoice.test.ts expects total 1099 but received 1100",
+  "Move rounding to final invoice total calculation"
+]

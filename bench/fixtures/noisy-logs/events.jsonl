@@ -1,0 +1,6 @@
+{"type":"note","timestamp":"2026-06-26T12:00:00.000Z","noteType":"task","content":"Fix websocket reconnect loop"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T12:01:00.000Z","agent":"claude","branch":"fix/ws-reconnect","isRepo":true,"status":[" M src/ws/client.ts"," M src/ws/backoff.ts"," M tests/ws/reconnect.test.ts"],"changedFiles":["src/ws/client.ts","src/ws/backoff.ts","tests/ws/reconnect.test.ts"],"diffStat":"3 files changed, 57 insertions(+), 22 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T12:02:00.000Z","noteType":"decision","content":"Keep exponential backoff jitter"}
+{"type":"note","timestamp":"2026-06-26T12:03:00.000Z","noteType":"constraint","content":"Do not change public websocket client API"}
+{"type":"command_run","timestamp":"2026-06-26T12:04:00.000Z","command":"pnpm test tests/ws/reconnect.test.ts","status":"failed","summary":"reconnect.test.ts times out after 5000ms"}
+{"type":"note","timestamp":"2026-06-26T12:05:00.000Z","noteType":"next","content":"Reset reconnect timer after successful open event"}

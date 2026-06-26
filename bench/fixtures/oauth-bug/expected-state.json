@@ -1,0 +1,9 @@
+{
+  "currentTask": "Fix Google OAuth redirect bug",
+  "touchedFiles": ["lib/auth/google.ts", "app/api/auth/callback/route.ts"],
+  "decisions": ["Do not rewrite the auth provider"],
+  "constraints": ["Do not change session cookie format", "Preserve existing email login behavior"],
+  "failures": ["Production OAuth callback returns 400", "session.test.ts fails because session token is undefined"],
+  "lastCommands": ["pnpm test auth", "pnpm lint"],
+  "nextSteps": ["Check redirect URI construction"]
+}

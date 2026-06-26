@@ -1,0 +1,7 @@
+[
+  "Fix checkout retry test flake",
+  "src/checkout/retry.ts",
+  "Do not change payment provider API shape",
+  "expected retry count 3 received 1",
+  "Advance fake timers after scheduling retry delay"
+]

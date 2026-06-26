@@ -1,0 +1,7 @@
+[
+  "Finish settings page migration",
+  "app/settings/page.tsx",
+  "Preserve keyboard navigation",
+  "page.test.tsx cannot find notification checkbox",
+  "Add accessible label to notification checkbox"
+]

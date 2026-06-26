@@ -1,0 +1,9 @@
+{
+  "currentTask": "Fix invoice total regression",
+  "touchedFiles": ["src/billing/invoice.ts", "src/billing/tax.ts", "tests/billing/invoice.test.ts"],
+  "decisions": ["Keep rounding behavior compatible with existing invoices"],
+  "constraints": ["Do not change persisted invoice schema"],
+  "failures": ["invoice.test.ts expects total 1099 but received 1100", "Tax calculation rounds per line item instead of invoice total"],
+  "lastCommands": ["pnpm test tests/billing/invoice.test.ts", "pnpm test tests/billing/tax.test.ts"],
+  "nextSteps": ["Move rounding to final invoice total calculation"]
+}

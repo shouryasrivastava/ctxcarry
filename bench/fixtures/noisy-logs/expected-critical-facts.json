@@ -1,0 +1,7 @@
+[
+  "Fix websocket reconnect loop",
+  "src/ws/client.ts",
+  "Do not change public websocket client API",
+  "reconnect.test.ts times out after 5000ms",
+  "Reset reconnect timer after successful open event"
+]

@@ -1,0 +1,9 @@
+{
+  "currentTask": "Refactor command parser into a reusable module",
+  "touchedFiles": ["src/cli.ts", "src/parser.ts", "tests/parser.test.ts"],
+  "decisions": ["Keep CLI argument behavior backward compatible", "Do not add a runtime dependency for argument parsing"],
+  "constraints": ["Preserve existing help output"],
+  "failures": ["parser.test.ts fails for repeated flags"],
+  "lastCommands": ["pnpm test tests/parser.test.ts"],
+  "nextSteps": ["Add support for repeated flag arrays in parser.ts"]
+}

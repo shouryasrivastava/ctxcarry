@@ -1,0 +1,7 @@
+[
+  "Reduce dashboard query latency",
+  "lib/cache/dashboard-cache.ts",
+  "Preserve tenant isolation",
+  "query.test.ts fails because tenant filter is missing from cached query key",
+  "Include tenant id in dashboard cache key"
+]

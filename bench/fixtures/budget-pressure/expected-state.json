@@ -1,0 +1,9 @@
+{
+  "currentTask": "Reduce dashboard query latency",
+  "touchedFiles": ["app/dashboard/page.tsx", "lib/db/dashboard-query.ts", "lib/cache/dashboard-cache.ts", "tests/dashboard/query.test.ts"],
+  "decisions": ["Keep the existing dashboard route", "Do not add Redis for v0.1", "Reuse the existing in-memory cache helper"],
+  "constraints": ["Preserve tenant isolation", "Do not change analytics event names", "Keep the query API return shape stable"],
+  "failures": ["query.test.ts fails because tenant filter is missing from cached query key"],
+  "lastCommands": ["pnpm test tests/dashboard/query.test.ts"],
+  "nextSteps": ["Include tenant id in dashboard cache key"]
+}

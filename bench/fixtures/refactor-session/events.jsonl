@@ -1,0 +1,7 @@
+{"type":"note","timestamp":"2026-06-26T11:00:00.000Z","noteType":"task","content":"Refactor command parser into a reusable module"}
+{"type":"repo_snapshot","timestamp":"2026-06-26T11:01:00.000Z","agent":"claude","branch":"refactor/parser","isRepo":true,"status":[" M src/cli.ts"," A src/parser.ts"," A tests/parser.test.ts"],"changedFiles":["src/cli.ts","src/parser.ts","tests/parser.test.ts"],"diffStat":"3 files changed, 130 insertions(+), 44 deletions(-)"}
+{"type":"note","timestamp":"2026-06-26T11:02:00.000Z","noteType":"decision","content":"Keep CLI argument behavior backward compatible"}
+{"type":"note","timestamp":"2026-06-26T11:03:00.000Z","noteType":"decision","content":"Do not add a runtime dependency for argument parsing"}
+{"type":"note","timestamp":"2026-06-26T11:04:00.000Z","noteType":"constraint","content":"Preserve existing help output"}
+{"type":"command_run","timestamp":"2026-06-26T11:05:00.000Z","command":"pnpm test tests/parser.test.ts","status":"failed","summary":"parser.test.ts fails for repeated flags"}
+{"type":"note","timestamp":"2026-06-26T11:06:00.000Z","noteType":"next","content":"Add support for repeated flag arrays in parser.ts"}

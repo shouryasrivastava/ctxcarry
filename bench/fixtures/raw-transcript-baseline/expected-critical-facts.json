@@ -1,0 +1,7 @@
+[
+  "Fix markdown export losing tables",
+  "src/reports/markdown.ts",
+  "Do not add a markdown dependency",
+  "export.test.ts fails because pipe table rows are omitted",
+  "Serialize table rows in markdown.ts"
+]

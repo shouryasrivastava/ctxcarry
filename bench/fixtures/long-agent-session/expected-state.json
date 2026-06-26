@@ -1,0 +1,9 @@
+{
+  "currentTask": "Complete project search indexing migration",
+  "touchedFiles": ["src/index/search-index.ts", "src/index/file-walker.ts", "tests/index/search-index.test.ts"],
+  "decisions": ["Do not replace the lexical index with embeddings in v0.1", "Keep index files local-only"],
+  "constraints": ["Ignore node_modules, dist, build, and .next"],
+  "failures": ["search-index.test.ts fails because ignored files are still indexed"],
+  "lastCommands": ["pnpm test tests/index/search-index.test.ts", "pnpm run build"],
+  "nextSteps": ["Apply ignore matcher before adding files to the index"]
+}

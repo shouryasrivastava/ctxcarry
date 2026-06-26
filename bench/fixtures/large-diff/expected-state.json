@@ -1,0 +1,9 @@
+{
+  "currentTask": "Finish settings page migration",
+  "touchedFiles": ["app/settings/page.tsx", "components/settings/profile-form.tsx", "components/settings/notification-form.tsx", "tests/settings/page.test.tsx"],
+  "decisions": ["Keep existing settings route", "Do not migrate billing settings in this change"],
+  "constraints": ["Preserve keyboard navigation"],
+  "failures": ["page.test.tsx cannot find notification checkbox"],
+  "lastCommands": ["pnpm test tests/settings/page.test.tsx", "pnpm lint"],
+  "nextSteps": ["Add accessible label to notification checkbox"]
+}
