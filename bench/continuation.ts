@@ -23,13 +23,13 @@ process.stdout.write(report);
 function collectRows(root: string, expectedFacts: string[]): Row[] {
   runCli(root, "switch", "codex");
   const raw = readAllSessionText(root);
-  const handoff = readIfExists(path.join(root, ".handoff", "handoffs", "codex.md"));
+  const ctxcarry = readIfExists(path.join(root, ".ctxcarry", "ctxcarrys", "codex.md"));
   return [
     row("no handoff", "", expectedFacts),
     row("raw transcript", raw, expectedFacts),
     row("naive first-2k truncation", raw.slice(0, 8000), expectedFacts),
     row("naive last-2k truncation", raw.slice(Math.max(0, raw.length - 8000)), expectedFacts),
-    row("Handoff handoff", handoff, expectedFacts)
+    row("ctxcarry handoff", ctxcarry, expectedFacts)
   ];
 }
 
@@ -45,7 +45,7 @@ function row(mode: string, text: string, expectedFacts: string[]): Row {
 
 function render(rows: Row[], hasFacts: boolean): string {
   return [
-    "# Handoff Real-Agent Continuation Benchmark",
+    "# ctxcarry Real-Agent Continuation Benchmark",
     "",
     "This scaffold compares context modes using real local session artifacts. It does not execute agents or fabricate success rates.",
     hasFacts ? "Expected facts were provided, so fact presence is measured." : "No expected facts file was provided, so fact presence is not measured.",
@@ -61,7 +61,7 @@ function render(rows: Row[], hasFacts: boolean): string {
 }
 
 function readAllSessionText(root: string): string {
-  const sessionsRoot = path.join(root, ".handoff", "sessions");
+  const sessionsRoot = path.join(root, ".ctxcarry", "sessions");
   if (!fs.existsSync(sessionsRoot)) return "";
   const parts: string[] = [];
   for (const sessionId of fs.readdirSync(sessionsRoot).sort()) {

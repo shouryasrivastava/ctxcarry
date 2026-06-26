@@ -2,7 +2,7 @@
 
 Current task: Remove leaked credentials from auth test logs.
 
-This raw context intentionally contains fake secret-shaped values. The benchmark must verify that exact fake secrets do not appear in Handoff outputs.
+This raw context intentionally contains fake secret-shaped values. The benchmark must verify that exact fake secrets do not appear in ctxcarry outputs.
 
 OPENAI_API_KEY=sk-test-123
 ANTHROPIC_API_KEY=abc123

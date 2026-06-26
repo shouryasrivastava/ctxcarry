@@ -4,7 +4,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { assert, estimateTokens, readFile, runCli } from "./lib.js";
 
-const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "handoff-e2e-"));
+const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-e2e-"));
 execFileSync("git", ["init"], { cwd: workDir, stdio: "ignore" });
 fs.mkdirSync(path.join(workDir, "lib", "auth"), { recursive: true });
 fs.writeFileSync(path.join(workDir, "lib", "auth", "google.ts"), "export const redirect = '';\n");
@@ -27,5 +27,5 @@ assert(agents.includes("Check redirect URI construction"), "AGENTS.md is missing
 assert(estimateTokens(agents) <= 4000, "AGENTS.md exceeds token budget");
 
 console.log("End-to-end Claude to Codex benchmark: PASS");
-console.log(`Handoff tokens: ${estimateTokens(agents)}`);
+console.log(`ctxcarry tokens: ${estimateTokens(agents)}`);
 console.log(`Work dir: ${workDir}`);

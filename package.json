@@ -1,13 +1,14 @@
 {
-  "name": "@shouryasrivastava/handoff",
+  "name": "ctxcarry",
   "version": "0.3.0",
   "description": "Portable project memory and handoff context for AI coding agents.",
   "type": "module",
   "bin": {
-    "handoff": "dist/cli.js"
+    "ctxcarry": "dist/cli.js"
   },
   "files": [
     "dist",
+    "assets",
     "README.md"
   ],
   "scripts": {
@@ -24,7 +25,7 @@
   "keywords": [
     "ai",
     "coding-agents",
-    "handoff",
+    "ctxcarry",
     "claude-code",
     "codex",
     "claude",
@@ -32,13 +33,13 @@
     "agent-memory",
     "developer-tools"
   ],
-  "homepage": "https://github.com/shouryasrivastava/handoff#readme",
+  "homepage": "https://github.com/shouryasrivastava/ctxcarry#readme",
   "bugs": {
-    "url": "https://github.com/shouryasrivastava/handoff/issues"
+    "url": "https://github.com/shouryasrivastava/ctxcarry/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shouryasrivastava/handoff.git"
+    "url": "git+https://github.com/shouryasrivastava/ctxcarry.git"
   },
   "engines": {
     "node": ">=20"

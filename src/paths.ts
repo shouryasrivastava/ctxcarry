@@ -1,11 +1,11 @@
 import path from "node:path";
 
-export const HANDOFF_DIR = ".handoff";
+export const CTXCARRY_DIR = ".ctxcarry";
 
 export function rootPath(...parts: string[]): string {
   return path.join(process.cwd(), ...parts);
 }
 
-export function handoffPath(...parts: string[]): string {
-  return rootPath(HANDOFF_DIR, ...parts);
+export function ctxcarryPath(...parts: string[]): string {
+  return rootPath(CTXCARRY_DIR, ...parts);
 }

@@ -2,7 +2,7 @@
 
 Current task: Reduce dashboard query latency.
 
-This fixture simulates a session with too many notes for a small handoff budget. Handoff must keep task, constraints, active failures, touched files, and next step while shrinking old commands and stale attempts.
+This fixture simulates a session with too many notes for a small ctxcarry budget. ctxcarry must keep task, constraints, active failures, touched files, and next step while shrinking old commands and stale attempts.
 
 Touched files:
 - app/dashboard/page.tsx

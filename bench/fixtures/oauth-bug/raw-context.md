@@ -35,4 +35,4 @@ Google OAuth error 400 invalid_request redirect_uri_mismatch at OAuthClient.exch
 Google OAuth error 400 invalid_request redirect_uri_mismatch at OAuthClient.exchangeCode
 
 Large copied diff excerpt:
-The redirect helper was inspected with surrounding imports, test setup, callback handler, provider initialization, cookie serialization, and repeated unchanged code blocks. Those details are intentionally omitted from the expected handoff unless they identify a touched file or continuity-critical decision.
+The redirect helper was inspected with surrounding imports, test setup, callback handler, provider initialization, cookie serialization, and repeated unchanged code blocks. Those details are intentionally omitted from the expected ctxcarry unless they identify a touched file or continuity-critical decision.

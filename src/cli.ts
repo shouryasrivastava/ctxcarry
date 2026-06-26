@@ -5,7 +5,7 @@ import { compactState } from "./distill.js";
 import { learnFromSessions } from "./learn.js";
 import { serveMcp } from "./mcp-server.js";
 import { estimateSavings, estimateTokens } from "./tokens.js";
-import { appendEvent, handoffDirName, ensureInitialized, initStore, readState } from "./store.js";
+import { appendEvent, ctxcarryDirName, ensureInitialized, initStore, readState } from "./store.js";
 
 interface ParsedArgs {
   command?: string;
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
         return;
       case "init":
         initStore();
-        console.log(`Initialized ${handoffDirName()}/ and handoff.config.json`);
+        console.log(`Initialized ${ctxcarryDirName()}/ and ctxcarry.config.json`);
         return;
       case "capture":
         ensureInitialized();
@@ -48,7 +48,7 @@ async function main(): Promise<void> {
       case "compact":
         ensureInitialized();
         compactState();
-        console.log("Compacted .handoff/state.json and .handoff/state.md");
+        console.log("Compacted .ctxcarry/state.json and .ctxcarry/state.md");
         return;
       case "compile":
         ensureInitialized();
@@ -75,11 +75,11 @@ async function main(): Promise<void> {
         await mcpCommand(args);
         return;
       default:
-        throw new Error(`Unknown command "${args.command}". Run \`handoff --help\`.`);
+        throw new Error(`Unknown command "${args.command}". Run \`ctxcarry --help\`.`);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`handoff: ${message}`);
+    console.error(`ctxcarry: ${message}`);
     process.exitCode = 1;
   }
 }
@@ -89,10 +89,10 @@ function addNote(args: ParsedArgs): void {
   const text = stringFlag(args, "text");
   const agent = stringFlag(args, "agent");
   if (!type || !["decision", "failure", "todo", "constraint", "task", "next", "resolved"].includes(type)) {
-    throw new Error("`handoff note` requires --type decision|failure|todo|constraint|task|next|resolved.");
+    throw new Error("`ctxcarry note` requires --type decision|failure|todo|constraint|task|next|resolved.");
   }
   if (!text) {
-    throw new Error("`handoff note` requires --text.");
+    throw new Error("`ctxcarry note` requires --text.");
   }
   appendEvent({
     type: "note",
@@ -106,14 +106,14 @@ function addNote(args: ParsedArgs): void {
 function compileCommand(args: ParsedArgs): void {
   const agent = stringFlag(args, "agent") ?? requiredPositional(args, 0, "agent");
   const output = compileAgent(agent, numberFlag(args, "budget"));
-  console.log(`Compiled ${agent} handoff to ${output}`);
+  console.log(`Compiled ${agent} ctxcarry to ${output}`);
 }
 
 function switchCommand(args: ParsedArgs): void {
   const agent = requiredPositional(args, 0, "agent");
   compactState();
   const output = compileAgent(agent, numberFlag(args, "budget"));
-  console.log(`Prepared ${agent} handoff in ${output}.`);
+  console.log(`Prepared ${agent} ctxcarry in ${output}.`);
   if (agent === "codex") {
     console.log("Next: run `codex` in this repo.");
   }
@@ -129,7 +129,7 @@ function statusCommand(): void {
   console.log(`Files touched: ${state.working.touchedFiles.length}`);
   console.log(`Open failures: ${failures}`);
   console.log(`Decisions: ${state.episodic.decisions.length}`);
-  console.log(`Token estimate for Codex handoff: ${estimate}`);
+  console.log(`Token estimate for Codex Handoff: ${estimate}`);
 }
 
 function tokensCommand(args: ParsedArgs): void {
@@ -149,20 +149,20 @@ function printSnapshot(snapshot: ReturnType<typeof captureSnapshot>): void {
 }
 
 function printHelp(): void {
-  console.log(`Handoff local agent handoff CLI
+  console.log(`ctxcarry local agent ctxcarry CLI
 
 Usage:
-  handoff init
-  handoff capture [--agent claude]
-  handoff note --type decision|failure|todo|constraint|task|next|resolved --text "..."
-  handoff run <agent>
-  handoff compact
-  handoff compile --agent codex|claude [--budget 4000]
-  handoff switch <agent> [--budget 4000]
-  handoff status
-  handoff tokens [--agent codex] [--budget 4000]
-  handoff learn [--apply]
-  handoff mcp serve
+  ctxcarry init
+  ctxcarry capture [--agent claude]
+  ctxcarry note --type decision|failure|todo|constraint|task|next|resolved --text "..."
+  ctxcarry run <agent>
+  ctxcarry compact
+  ctxcarry compile --agent codex|claude [--budget 4000]
+  ctxcarry switch <agent> [--budget 4000]
+  ctxcarry status
+  ctxcarry tokens [--agent codex] [--budget 4000]
+  ctxcarry learn [--apply]
+  ctxcarry mcp serve
 `);
 }
 
@@ -219,14 +219,14 @@ function learnCommand(args: ParsedArgs): void {
   const markdown = learnFromSessions(Boolean(args.flags.apply));
   console.log(markdown);
   if (args.flags.apply) {
-    console.log("\nApplied learned guidance to .handoff/learned.md, AGENTS.md, and CLAUDE.md");
+    console.log("\nApplied learned guidance to .ctxcarry/learned.md, AGENTS.md, and CLAUDE.md");
   }
 }
 
 async function mcpCommand(args: ParsedArgs): Promise<void> {
   const subcommand = requiredPositional(args, 0, "mcp subcommand");
   if (subcommand !== "serve") {
-    throw new Error("Only `handoff mcp serve` is supported.");
+    throw new Error("Only `ctxcarry mcp serve` is supported.");
   }
   await serveMcp();
 }

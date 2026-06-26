@@ -38,9 +38,9 @@ export function fixtureNames(): string[] {
 
 export function prepareFixture(name: string): PreparedFixture {
   const fixtureDir = path.join(fixturesRoot, name);
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `handoff-bench-${name}-`));
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `ctxcarry-bench-${name}-`));
   runCli(workDir, "init");
-  fs.copyFileSync(path.join(fixtureDir, "events.jsonl"), path.join(workDir, ".handoff", "events.jsonl"));
+  fs.copyFileSync(path.join(fixtureDir, "events.jsonl"), path.join(workDir, ".ctxcarry", "events.jsonl"));
   const group = stressFixtures.includes(name) ? "stress" : "correctness";
   const seedRawContext = fs.readFileSync(path.join(fixtureDir, "raw-context.md"), "utf8");
   const expected = JSON.parse(fs.readFileSync(path.join(fixtureDir, "expected-state.json"), "utf8")) as ExpectedState;
@@ -77,7 +77,7 @@ export function timed<T>(fn: () => T): { value: T; ms: number } {
 }
 
 export function readState(workDir: string): any {
-  return JSON.parse(fs.readFileSync(path.join(workDir, ".handoff", "state.json"), "utf8"));
+  return JSON.parse(fs.readFileSync(path.join(workDir, ".ctxcarry", "state.json"), "utf8"));
 }
 
 export function readFile(workDir: string, relativePath: string): string {
@@ -182,7 +182,7 @@ function expandStressRawContext(name: string, seed: string, expected: ExpectedSt
         "+  generated dependency metadata repeated for benchmark scale",
         "-  generated dependency metadata repeated for benchmark scale",
         "diff --git a/generated/settings-snapshot.json b/generated/settings-snapshot.json",
-        "+  large generated snapshot line that should not become handoff state",
+        "+  large generated snapshot line that should not become ctxcarry state",
         "diff --git a/generated/client.ts b/generated/client.ts",
         "+  generated API client line repeated for scale",
         "diff --git a/storybook-static/assets.json b/storybook-static/assets.json",
@@ -192,8 +192,8 @@ function expandStressRawContext(name: string, seed: string, expected: ExpectedSt
       stagedStress(distributedFacts, [
         "Assistant reasoning: maybe change renderer, maybe change serializer, maybe inspect snapshots.",
         "Rejected idea: change HTML export behavior.",
-        "Tool output: repeated full markdown serializer omitted from useful handoff.",
-        "Assistant pasted a complete renderer file that is not needed for handoff.",
+        "Tool output: repeated full markdown serializer omitted from useful ctxcarry.",
+        "Assistant pasted a complete renderer file that is not needed for ctxcarry.",
         "Assistant debated table escaping and list serialization.",
         "Tool output: snapshot diff repeated with unchanged report sections."
       ], 360)

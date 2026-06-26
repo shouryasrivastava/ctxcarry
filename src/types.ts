@@ -8,7 +8,7 @@ export interface AgentConfig {
   command?: string;
 }
 
-export interface HandoffConfig {
+export interface ctxcarryConfig {
   project: string;
   default_budget_tokens: number;
   agents: Record<string, AgentConfig>;
@@ -33,7 +33,7 @@ export interface GitSnapshot {
   diffStat: string;
 }
 
-export interface HandoffEvent {
+export interface ctxcarryEvent {
   type: string;
   timestamp: string;
   agent?: string;
@@ -46,7 +46,7 @@ export interface MemoryItem {
   agent?: string;
 }
 
-export interface HandoffState {
+export interface ctxcarryState {
   version: 1;
   updatedAt: string;
   persistent: {

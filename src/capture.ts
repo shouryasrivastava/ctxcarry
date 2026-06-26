@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { archiveSessionArtifact } from "./archive.js";
-import { handoffPath } from "./paths.js";
+import { ctxcarryPath } from "./paths.js";
 import { redactText } from "./redact.js";
 import { appendEvent, readConfig } from "./store.js";
 import { getGitSnapshot, summarizeSnapshot } from "./git.js";
@@ -34,11 +34,11 @@ export async function runAgent(agent: string): Promise<RunSessionResult> {
   const config = readConfig();
   const agentConfig = config.agents[agent];
   if (!agentConfig?.enabled) {
-    throw new Error(`Agent "${agent}" is not enabled in handoff.config.json.`);
+    throw new Error(`Agent "${agent}" is not enabled in ctxcarry.config.json.`);
   }
 
   const sessionId = createSessionId(agent);
-  const sessionDir = handoffPath("sessions", sessionId);
+  const sessionDir = ctxcarryPath("sessions", sessionId);
   fs.mkdirSync(sessionDir, { recursive: true });
 
   const instructionsPath = path.join(sessionDir, "instructions.md");
@@ -149,9 +149,9 @@ export async function runAgent(agent: string): Promise<RunSessionResult> {
 
 function writeSessionInstructions(agent: string, sessionId: string, instructionsPath: string, summaryPath: string): void {
   const relativeSummaryPath = path.relative(process.cwd(), summaryPath);
-  const instructions = `# Handoff Session Instructions
+  const instructions = `# ctxcarry Session Instructions
 
-At the end of this session, write a concise handoff summary to:
+At the end of this session, write a concise ctxcarry summary to:
 
 ${relativeSummaryPath}
 
@@ -245,9 +245,9 @@ function spawnInteractive(command: string, sessionDir: string, instructionsPath:
       cwd: process.cwd(),
       env: {
         ...process.env,
-        HANDOFF_SESSION_DIR: sessionDir,
-        HANDOFF_SESSION_INSTRUCTIONS: instructionsPath,
-        HANDOFF_SESSION_SUMMARY: summaryPath
+        CTXCARRY_SESSION_DIR: sessionDir,
+        CTXCARRY_SESSION_INSTRUCTIONS: instructionsPath,
+        CTXCARRY_SESSION_SUMMARY: summaryPath
       },
       stdio: "inherit",
       shell: false
@@ -272,7 +272,7 @@ function statusFiles(status: string[], codes: string[]): string[] {
     status
       .filter((line) => codes.some((code) => line.trimStart().startsWith(code)))
       .map((line) => line.slice(3).trim())
-      .filter((file) => !file.startsWith(".handoff/"))
+      .filter((file) => !file.startsWith(".ctxcarry/"))
       .filter(Boolean)
   );
 }

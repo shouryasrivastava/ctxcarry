@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { handoffPath } from "./paths.js";
+import { ctxcarryPath } from "./paths.js";
 import { readState } from "./store.js";
 
 interface JsonRpcRequest {
@@ -39,15 +39,15 @@ function dispatch(request: JsonRpcRequest): any {
   if (request.method === "initialize") {
     return {
       protocolVersion: "2024-11-05",
-      serverInfo: { name: "handoff", version: "0.3.0" },
+      serverInfo: { name: "ctxcarry", version: "0.3.0" },
       capabilities: { tools: {} }
     };
   }
   if (request.method === "tools/list") {
     return {
       tools: [
-        { name: "get_current_task", description: "Return current Handoff task state.", inputSchema: { type: "object", properties: {} } },
-        { name: "get_latest_handoff", description: "Return latest handoff markdown.", inputSchema: { type: "object", properties: { agent: { type: "string" } } } },
+        { name: "get_current_task", description: "Return current ctxcarry task state.", inputSchema: { type: "object", properties: {} } },
+        { name: "get_latest_ctxcarry", description: "Return latest ctxcarry markdown.", inputSchema: { type: "object", properties: { agent: { type: "string" } } } },
         { name: "get_relevant_session_events", description: "Return recent session events.", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
         { name: "expand_session_artifact", description: "Read a raw archived session artifact.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } },
         { name: "summarize_latest_failure", description: "Return the latest active failure.", inputSchema: { type: "object", properties: {} } }
@@ -65,22 +65,22 @@ function callTool(name: string, args: any): any {
   if (name === "get_current_task") {
     return toolText(JSON.stringify(state.working, null, 2));
   }
-  if (name === "get_latest_handoff") {
+  if (name === "get_latest_ctxcarry") {
     const agent = typeof args.agent === "string" ? args.agent : "codex";
-    const file = handoffPath("handoffs", `${agent}.md`);
+    const file = ctxcarryPath("ctxcarrys", `${agent}.md`);
     return toolText(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "");
   }
   if (name === "get_relevant_session_events") {
     const limit = typeof args.limit === "number" ? args.limit : 20;
-    const events = readJsonl(handoffPath("events.jsonl")).slice(-limit);
+    const events = readJsonl(ctxcarryPath("events.jsonl")).slice(-limit);
     return toolText(JSON.stringify(events, null, 2));
   }
   if (name === "expand_session_artifact") {
     const requestedPath = String(args.path ?? "");
-    const safeRoot = handoffPath("sessions");
+    const safeRoot = ctxcarryPath("sessions");
     const absolute = path.resolve(requestedPath);
     if (!absolute.startsWith(path.resolve(safeRoot))) {
-      throw new Error("Artifact path must be inside .handoff/sessions.");
+      throw new Error("Artifact path must be inside .ctxcarry/sessions.");
     }
     return toolText(fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : "");
   }

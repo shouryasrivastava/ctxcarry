@@ -2,7 +2,7 @@
 
 Current task: Fix markdown export losing tables.
 
-This fixture exists to compare raw transcript presence against Handoff handoff presence. It includes a transcript-like narrative with all important facts plus repeated irrelevant reasoning.
+This fixture exists to compare raw transcript presence against ctxcarry ctxcarry presence. It includes a transcript-like narrative with all important facts plus repeated irrelevant reasoning.
 
 User: Tables disappear from exported markdown reports.
 Agent: I will inspect the report renderer, markdown serializer, and export tests.

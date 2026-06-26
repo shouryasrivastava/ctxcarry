@@ -18,7 +18,7 @@ export function getGitSnapshot(): GitSnapshot {
     ...lines(runGit(["diff", "--name-only"])),
     ...lines(runGit(["diff", "--cached", "--name-only"])),
     ...status.map((line) => line.slice(3).trim()).filter(Boolean)
-  ].filter((file) => !file.startsWith(".handoff/")));
+  ].filter((file) => !file.startsWith(".ctxcarry/")));
   const diffStat = runGit(["diff", "--stat"]);
 
   return {

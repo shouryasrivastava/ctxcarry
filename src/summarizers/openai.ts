@@ -10,7 +10,7 @@ export interface Summarizer {
 export class OpenAISummarizer implements Summarizer {
   constructor(
     private readonly apiKey = process.env.OPENAI_API_KEY,
-    private readonly model = process.env.HANDOFF_OPENAI_MODEL
+    private readonly model = process.env.CTXCARRY_OPENAI_MODEL
   ) {}
 
   async summarize(input: SummarizerInput): Promise<string> {
@@ -18,7 +18,7 @@ export class OpenAISummarizer implements Summarizer {
       throw new Error("OPENAI_API_KEY is required for OpenAI summarization.");
     }
     if (!this.model) {
-      throw new Error("HANDOFF_OPENAI_MODEL is required for OpenAI summarization.");
+      throw new Error("CTXCARRY_OPENAI_MODEL is required for OpenAI summarization.");
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -32,7 +32,7 @@ export class OpenAISummarizer implements Summarizer {
         input: [
           {
             role: "system",
-            content: "Summarize coding-agent session history into compact project handoff state. Preserve decisions, failures, files, constraints, and next steps."
+            content: "Summarize coding-agent session history into compact project ctxcarry state. Preserve decisions, failures, files, constraints, and next steps."
           },
           {
             role: "user",

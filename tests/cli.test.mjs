@@ -8,7 +8,7 @@ import test from "node:test";
 const root = path.resolve(new URL("..", import.meta.url).pathname);
 const cli = path.join(root, "dist", "cli.js");
 
-test("initializes store, records notes, compacts, and compiles Codex handoff", () => {
+test("initializes store, records notes, compacts, and compiles Codex ctxcarry", () => {
   const cwd = makeTempDir();
   execFileSync("git", ["init"], { cwd, stdio: "ignore" });
   fs.writeFileSync(path.join(cwd, "example.ts"), "export const value = 1;\n");
@@ -22,13 +22,13 @@ test("initializes store, records notes, compacts, and compiles Codex handoff", (
   run(cwd, "compact");
   run(cwd, "compile", "--agent", "codex");
 
-  const state = JSON.parse(fs.readFileSync(path.join(cwd, ".handoff", "state.json"), "utf8"));
+  const state = JSON.parse(fs.readFileSync(path.join(cwd, ".ctxcarry", "state.json"), "utf8"));
   assert.equal(state.working.currentTask, "Fix OAuth redirect failure in production.");
   assert.deepEqual(state.episodic.decisions.map((item) => item.content), ["Do not rewrite the auth provider."]);
   assert.ok(state.working.touchedFiles.includes("example.ts"));
 
   const agents = fs.readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
-  assert.match(agents, /<!-- handoff:start -->/);
+  assert.match(agents, /<!-- ctxcarry:start -->/);
   assert.match(agents, /Fix OAuth redirect failure/);
   assert.match(agents, /Do not rewrite the auth provider/);
   assert.match(agents, /Inspect redirect URI construction/);
@@ -49,11 +49,11 @@ test("compile preserves user-authored content outside managed block", () => {
   const agents = fs.readFileSync(path.join(cwd, "AGENTS.md"), "utf8");
   assert.match(agents, /# Existing Guidance/);
   assert.match(agents, /Keep this\./);
-  assert.equal((agents.match(/<!-- handoff:start -->/g) ?? []).length, 1);
+  assert.equal((agents.match(/<!-- ctxcarry:start -->/g) ?? []).length, 1);
   assert.match(agents, /Preserve managed sections only/);
 });
 
-test("run creates a session, imports summary.md, and switch codex generates handoff", () => {
+test("run creates a session, imports summary.md, and switch codex generates ctxcarry", () => {
   const cwd = makeTempDir();
   execFileSync("git", ["init"], { cwd, stdio: "ignore" });
   writeAgentScript(
@@ -61,7 +61,7 @@ test("run creates a session, imports summary.md, and switch codex generates hand
     `import fs from "node:fs";
 fs.mkdirSync("lib/auth", { recursive: true });
 fs.writeFileSync("lib/auth/google.ts", "export const redirect = 'changed';\\n");
-fs.writeFileSync(process.env.HANDOFF_SESSION_SUMMARY, \`## Current Task
+fs.writeFileSync(process.env.CTXCARRY_SESSION_SUMMARY, \`## Current Task
 Fix Google OAuth redirect bug
 
 ## Files Changed
@@ -90,10 +90,10 @@ Check redirect URI construction
   const output = run(cwd, "run", "claude");
   assert.match(output, /Recorded session/);
 
-  const sessions = fs.readdirSync(path.join(cwd, ".handoff", "sessions"));
+  const sessions = fs.readdirSync(path.join(cwd, ".ctxcarry", "sessions"));
   assert.equal(sessions.length, 1);
-  assert.ok(fs.existsSync(path.join(cwd, ".handoff", "sessions", sessions[0], "instructions.md")));
-  assert.ok(fs.existsSync(path.join(cwd, ".handoff", "sessions", sessions[0], "summary.md")));
+  assert.ok(fs.existsSync(path.join(cwd, ".ctxcarry", "sessions", sessions[0], "instructions.md")));
+  assert.ok(fs.existsSync(path.join(cwd, ".ctxcarry", "sessions", sessions[0], "summary.md")));
 
   const switchOutput = run(cwd, "switch", "codex");
   assert.match(switchOutput, /Next: run `codex`/);
@@ -128,12 +128,12 @@ fs.writeFileSync("src/fallback.ts", "export const fallback = true;\\n");
   assert.match(agents, /Current Branch/);
 });
 
-test("session summaries are redacted before state and handoffs are written", () => {
+test("session summaries are redacted before state and ctxcarrys are written", () => {
   const cwd = makeTempDir();
   writeAgentScript(
     cwd,
     `import fs from "node:fs";
-fs.writeFileSync(process.env.HANDOFF_SESSION_SUMMARY, \`## Current Task
+fs.writeFileSync(process.env.CTXCARRY_SESSION_SUMMARY, \`## Current Task
 Remove leaked credentials
 
 ## Files Changed
@@ -164,10 +164,10 @@ Apply recursive redaction
   run(cwd, "switch", "codex");
 
   const scanned = [
-    ".handoff/events.jsonl",
-    ".handoff/state.json",
-    ".handoff/state.md",
-    ".handoff/handoffs/codex.md",
+    ".ctxcarry/events.jsonl",
+    ".ctxcarry/state.json",
+    ".ctxcarry/state.md",
+    ".ctxcarry/ctxcarrys/codex.md",
     "AGENTS.md"
   ].map((file) => fs.readFileSync(path.join(cwd, file), "utf8").join?.() ?? fs.readFileSync(path.join(cwd, file), "utf8"));
 
@@ -182,7 +182,7 @@ test("run archives raw session artifacts and learn applies guidance", () => {
   writeAgentScript(
     cwd,
     `import fs from "node:fs";
-fs.writeFileSync(process.env.HANDOFF_SESSION_SUMMARY, \`## Current Task
+fs.writeFileSync(process.env.CTXCARRY_SESSION_SUMMARY, \`## Current Task
 Learn from failure
 
 ## Files Changed
@@ -213,11 +213,11 @@ Apply learned guidance
   run(cwd, "compact");
   const learnOutput = run(cwd, "learn", "--apply");
 
-  const sessions = fs.readdirSync(path.join(cwd, ".handoff", "sessions"));
-  const rawDir = path.join(cwd, ".handoff", "sessions", sessions[0], "raw");
+  const sessions = fs.readdirSync(path.join(cwd, ".ctxcarry", "sessions"));
+  const rawDir = path.join(cwd, ".ctxcarry", "sessions", sessions[0], "raw");
   assert.ok(fs.existsSync(path.join(rawDir, "summary.md")));
-  assert.match(learnOutput, /Handoff Learned Guidance/);
-  assert.ok(fs.existsSync(path.join(cwd, ".handoff", "learned.md")));
+  assert.match(learnOutput, /ctxcarry Learned Guidance/);
+  assert.ok(fs.existsSync(path.join(cwd, ".ctxcarry", "learned.md")));
   assert.match(fs.readFileSync(path.join(cwd, "AGENTS.md"), "utf8"), /Keep learned guidance local/);
 });
 
@@ -232,7 +232,7 @@ test("mcp server lists tools over stdio", () => {
     timeout: 1000
   });
   assert.match(output, /get_current_task/);
-  assert.match(output, /get_latest_handoff/);
+  assert.match(output, /get_latest_ctxcarry/);
 });
 
 function run(cwd, ...args) {
@@ -243,7 +243,7 @@ function run(cwd, ...args) {
 }
 
 function makeTempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "handoff-test-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-test-"));
 }
 
 function writeAgentScript(cwd, source) {
@@ -251,7 +251,7 @@ function writeAgentScript(cwd, source) {
 }
 
 function setAgentCommand(cwd, agent, command) {
-  const configPath = path.join(cwd, "handoff.config.json");
+  const configPath = path.join(cwd, "ctxcarry.config.json");
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
   config.agents[agent].command = command;
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");

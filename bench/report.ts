@@ -56,7 +56,7 @@ interface AccuracyRow {
 interface BaselineRow {
   fixture: string;
   group: string;
-  mode: "no handoff" | "raw transcript" | "naive truncation" | "Handoff handoff";
+  mode: "no handoff" | "raw transcript" | "naive truncation" | "ctxcarry handoff";
   tokens: number;
   criticalFactPresence: number;
 }
@@ -74,7 +74,7 @@ interface TruncationResistanceRow {
   rawTranscript: number;
   first2kTokens: number;
   last2kTokens: number;
-  handoffHandoff: number;
+  ctxcarryctxcarry: number;
 }
 
 interface E2ERow {
@@ -152,7 +152,7 @@ function collectReport(): BenchmarkReport {
 
 function environmentMetadata(): Record<string, string> {
   return {
-    "Handoff package version": packageVersion(),
+    "ctxcarry package version": packageVersion(),
     "Node version": process.version,
     "Platform / arch": `${process.platform}/${process.arch}`,
     "CPU model": os.cpus()[0]?.model ?? "not available",
@@ -183,9 +183,9 @@ function compressionBenchmark(): CompressionRow[] {
     const fixture = prepareFixture(name);
     runCli(fixture.workDir, "compact");
     const result = timed(() => runCli(fixture.workDir, "compile", "--agent", "codex"));
-    const handoff = readFile(fixture.workDir, ".handoff/handoffs/codex.md");
+    const ctxcarry = readFile(fixture.workDir, ".ctxcarry/ctxcarrys/codex.md");
     const originalTokens = estimateTokens(fixture.rawContext);
-    const handoffTokens = estimateTokens(handoff);
+    const handoffTokens = estimateTokens(ctxcarry);
     const savedTokens = originalTokens - handoffTokens;
     return {
       fixture: name,
@@ -220,18 +220,18 @@ function recallBenchmark(): AccuracyRow[] {
     runCli(fixture.workDir, "compact");
     runCli(fixture.workDir, "compile", "--agent", "codex", "--budget", "4000");
     const state = readState(fixture.workDir);
-    const handoff = readFile(fixture.workDir, ".handoff/handoffs/codex.md");
+    const ctxcarry = readFile(fixture.workDir, ".ctxcarry/ctxcarrys/codex.md");
     const actualItems = stateItems(state);
     const expectedItems = expectedItemsFromFixture(fixture.expected);
     const row: AccuracyRow = {
       fixture: name,
       group: fixture.group,
       exactRecall: exactItemRecall(actualItems, expectedItems),
-      fuzzyRecall: criticalPresence(handoff, fixture.criticalFacts),
+      fuzzyRecall: criticalPresence(ctxcarry, fixture.criticalFacts),
       precision: precision(actualItems, expectedItems),
-      contradictionCount: contradictionCount(handoff),
-      budgetRecall: criticalPresence(handoff, fixture.criticalFacts),
-      redactionPassed: !containsKnownFakeSecret(handoff),
+      contradictionCount: contradictionCount(ctxcarry),
+      budgetRecall: criticalPresence(ctxcarry, fixture.criticalFacts),
+      redactionPassed: !containsKnownFakeSecret(ctxcarry),
       taskRecall: scalarRecall(state.working.currentTask, fixture.expected.currentTask),
       fileRecall: itemRecall(state.working.touchedFiles, fixture.expected.touchedFiles),
       decisionRecall: itemRecall(state.episodic.decisions.map((item: any) => item.content), fixture.expected.decisions),
@@ -260,7 +260,7 @@ function baselineBenchmark(): BaselineRow[] {
     const fixture = prepareFixture(name);
     runCli(fixture.workDir, "compact");
     runCli(fixture.workDir, "compile", "--agent", "codex");
-    const handoff = readFile(fixture.workDir, ".handoff/handoffs/codex.md");
+    const ctxcarry = readFile(fixture.workDir, ".ctxcarry/ctxcarrys/codex.md");
     rows.push({
       fixture: name,
       group: fixture.group,
@@ -286,9 +286,9 @@ function baselineBenchmark(): BaselineRow[] {
     rows.push({
       fixture: name,
       group: fixture.group,
-      mode: "Handoff handoff",
-      tokens: estimateTokens(handoff),
-      criticalFactPresence: criticalPresence(handoff, fixture.criticalFacts)
+      mode: "ctxcarry handoff",
+      tokens: estimateTokens(ctxcarry),
+      criticalFactPresence: criticalPresence(ctxcarry, fixture.criticalFacts)
     });
   }
   return rows;
@@ -303,13 +303,13 @@ function truncationResistanceBenchmark(): TruncationResistanceRow[] {
     const fixture = prepareFixture(name);
     runCli(fixture.workDir, "compact");
     runCli(fixture.workDir, "compile", "--agent", "codex");
-    const handoff = readFile(fixture.workDir, ".handoff/handoffs/codex.md");
+    const ctxcarry = readFile(fixture.workDir, ".ctxcarry/ctxcarrys/codex.md");
     return {
       fixture: name,
       rawTranscript: criticalPresence(fixture.rawContext, fixture.criticalFacts),
       first2kTokens: criticalPresence(firstTokens(fixture.rawContext, 2000), fixture.criticalFacts),
       last2kTokens: criticalPresence(lastTokens(fixture.rawContext, 2000), fixture.criticalFacts),
-      handoffHandoff: criticalPresence(handoff, fixture.criticalFacts)
+      ctxcarryctxcarry: criticalPresence(ctxcarry, fixture.criticalFacts)
     };
   });
 }
@@ -330,13 +330,13 @@ function budgetStressBenchmark(): BudgetStressRow[] {
     for (const budget of budgets) {
       runCli(fixture.workDir, "compact");
       runCli(fixture.workDir, "compile", "--agent", "codex", "--budget", String(budget));
-      const handoff = readFile(fixture.workDir, ".handoff/handoffs/codex.md");
+      const ctxcarry = readFile(fixture.workDir, ".ctxcarry/ctxcarrys/codex.md");
       rows.push({
         fixture: name,
         group: fixture.group,
         budgetTokens: budget,
-        handoffTokens: estimateTokens(handoff),
-        criticalFactRecall: criticalPresence(handoff, fixture.criticalFacts)
+        handoffTokens: estimateTokens(ctxcarry),
+        criticalFactRecall: criticalPresence(ctxcarry, fixture.criticalFacts)
       });
     }
   }
@@ -344,7 +344,7 @@ function budgetStressBenchmark(): BudgetStressRow[] {
 }
 
 function e2eBenchmark(redactionPassed: boolean): E2ERow {
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "handoff-e2e-report-"));
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-e2e-report-"));
   const budget = 4000;
   execFileSync("git", ["init"], { cwd: workDir, stdio: "ignore" });
   fs.mkdirSync(path.join(workDir, "lib", "auth"), { recursive: true });
@@ -362,7 +362,7 @@ function e2eBenchmark(redactionPassed: boolean): E2ERow {
   const agentsPath = path.join(workDir, "AGENTS.md");
   const agentsMdExists = fs.existsSync(agentsPath);
   const agents = agentsMdExists ? fs.readFileSync(agentsPath, "utf8") : "";
-  const managedBlockExists = agents.includes("<!-- handoff:start -->") && agents.includes("<!-- handoff:end -->");
+  const managedBlockExists = agents.includes("<!-- ctxcarry:start -->") && agents.includes("<!-- ctxcarry:end -->");
   const handoffTokens = estimateTokens(agents);
   const withinBudget = handoffTokens <= budget;
   const status =
@@ -408,7 +408,7 @@ function redactionBenchmark(): RedactionResult {
     ["JWT_SECRET", "JWT_SECRET=supersecret"],
     ["PRIVATE_KEY", "PRIVATE_KEY=-----BEGIN PRIVATE KEY----- fake-private-key -----END PRIVATE KEY-----"]
   ];
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "handoff-redaction-"));
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-redaction-"));
   runCli(workDir, "init");
   runCli(workDir, "note", "--type", "task", "--text", "Verify redaction");
   for (const [, secret] of secrets) {
@@ -419,13 +419,13 @@ function redactionBenchmark(): RedactionResult {
   runCli(workDir, "compile", "--agent", "claude");
 
   const outputs = [
-    ".handoff/events.jsonl",
-    ".handoff/state.json",
-    ".handoff/state.md",
+    ".ctxcarry/events.jsonl",
+    ".ctxcarry/state.json",
+    ".ctxcarry/state.md",
     "AGENTS.md",
     "CLAUDE.md",
-    ".handoff/handoffs/codex.md",
-    ".handoff/handoffs/claude.md"
+    ".ctxcarry/ctxcarrys/codex.md",
+    ".ctxcarry/ctxcarrys/claude.md"
   ];
   const leaks: string[] = [];
   for (const output of outputs) {
@@ -448,9 +448,9 @@ function renderMarkdown(report: BenchmarkReport): string {
   const totalRaw = Number(report.keyResults["Total raw benchmark tokens"]);
   const totalHandoff = Number(report.keyResults["Total handoff tokens"]);
   return [
-    "# Handoff Benchmark Report",
+    "# ctxcarry Benchmark Report",
     "",
-    `In deterministic local fixture benchmarks, Handoff reduced ${formatInteger(totalRaw)} raw context tokens to ${formatInteger(totalHandoff)} handoff tokens while preserving ${report.keyResults["Mean critical-fact recall"]} of handoff-critical facts.`,
+    `In deterministic local fixture benchmarks, ctxcarry reduced ${formatInteger(totalRaw)} raw context tokens to ${formatInteger(totalHandoff)} handoff tokens while preserving ${report.keyResults["Mean critical-fact recall"]} of handoff-critical facts.`,
     "",
     "The stress fixtures are deterministic synthetic workloads designed to simulate large test logs, noisy transcripts, large diffs, and repeated agent-session context. They are useful for measuring compaction behavior under scale, but they are not production telemetry or real agent-execution results.",
     "",
@@ -462,7 +462,7 @@ function renderMarkdown(report: BenchmarkReport): string {
     "",
     "## Correctness Fixture Results",
     table(
-      ["Fixture", "Original tokens", "Handoff tokens", "Compression", "Critical recall", "Budget recall", "Contradictions"],
+      ["Fixture", "Original tokens", "handoff tokens", "Compression", "Critical recall", "Budget recall", "Contradictions"],
       correctnessFixtures.map((fixture) => {
         const compression = report.compression.find((row) => row.fixture === fixture)!;
         const accuracy = report.accuracy.find((row) => row.fixture === fixture)!;
@@ -480,10 +480,10 @@ function renderMarkdown(report: BenchmarkReport): string {
     "",
     "## Stress Fixture Results",
     "",
-    "Stress fixtures contain large amounts of repeated logs, stale agent-session text, noisy diffs, and irrelevant output. Handoff's handoff remains small because it extracts the current task, relevant files, decisions, constraints, failures, commands, and next step instead of preserving raw transcript text.",
+    "Stress fixtures contain large amounts of repeated logs, stale agent-session text, noisy diffs, and irrelevant output. ctxcarry's ctxcarry remains small because it extracts the current task, relevant files, decisions, constraints, failures, commands, and next step instead of preserving raw transcript text.",
     "",
     table(
-      ["Fixture", "Original tokens", "Handoff tokens", "Compression", "Critical recall", "Budget recall", "Contradictions"],
+      ["Fixture", "Original tokens", "handoff tokens", "Compression", "Critical recall", "Budget recall", "Contradictions"],
       stressFixtures.map((fixture) => {
         const compression = report.compression.find((row) => row.fixture === fixture)!;
         const accuracy = report.accuracy.find((row) => row.fixture === fixture)!;
@@ -501,7 +501,7 @@ function renderMarkdown(report: BenchmarkReport): string {
     "",
     "## Compression Performance",
     table(
-      ["Fixture", "Group", "Original tokens", "Handoff tokens", "Saved tokens", "Compression ratio", "Latency ms"],
+      ["Fixture", "Group", "Original tokens", "handoff tokens", "Saved tokens", "Compression ratio", "Latency ms"],
       [...report.compression, report.compressionTotal].map((row) => [
         row.fixture,
         row.group,
@@ -513,7 +513,7 @@ function renderMarkdown(report: BenchmarkReport): string {
       ])
     ),
     "",
-    "## Handoff Accuracy",
+    "## ctxcarry Accuracy",
     table(
       ["Fixture", "Group", "Exact recall", "Fuzzy recall", "Precision", "Contradictions", "Budget recall", "Redaction", "Overall field recall"],
       report.accuracy.map((row) => [
@@ -537,25 +537,25 @@ function renderMarkdown(report: BenchmarkReport): string {
     "",
     "## Truncation Resistance",
     table(
-      ["Fixture", "Raw Transcript", "First 2k Tokens", "Last 2k Tokens", "Handoff Handoff"],
+      ["Fixture", "Raw Transcript", "First 2k Tokens", "Last 2k Tokens", "ctxcarry handoff"],
       report.truncationResistance.map((row) => [
         row.fixture,
         percent(row.rawTranscript),
         percent(row.first2kTokens),
         percent(row.last2kTokens),
-        percent(row.handoffHandoff)
+        percent(row.ctxcarryctxcarry)
       ])
     ),
     "",
     "## Budget Stress",
     table(
-      ["Fixture", "Group", "Budget", "Handoff tokens", "Critical-fact recall"],
+      ["Fixture", "Group", "Budget", "handoff tokens", "Critical-fact recall"],
       report.budgetStress.map((row) => [row.fixture, row.group, String(row.budgetTokens), String(row.handoffTokens), percent(row.criticalFactRecall)])
     ),
     "",
     "## E2E Claude-to-Codex",
     table(
-      ["Status", "AGENTS.md exists", "Managed block exists", "Handoff tokens", "Within budget", "Redaction passed"],
+      ["Status", "AGENTS.md exists", "Managed block exists", "handoff tokens", "Within budget", "Redaction passed"],
       [[report.e2e.status, yesNo(report.e2e.agentsMdExists), yesNo(report.e2e.managedBlockExists), String(report.e2e.handoffTokens), yesNo(report.e2e.withinBudget), yesNo(report.e2e.redactionPassed)]]
     ),
     "",
@@ -581,7 +581,7 @@ function renderMarkdown(report: BenchmarkReport): string {
     "pnpm run bench -- --out BENCHMARKS.md",
     "```",
     "",
-    "Use `pnpm run bench:compression`, `pnpm run bench:recall`, and `pnpm run bench:e2e` for narrower checks. Real-agent continuation benchmarks comparing no handoff, raw transcript, naive truncation, and Handoff handoff are planned next."
+    "Use `pnpm run bench:compression`, `pnpm run bench:recall`, and `pnpm run bench:e2e` for narrower checks. Real-agent continuation benchmarks comparing no handoff, raw transcript, naive truncation, and ctxcarry handoff are planned next."
   ]
     .filter((part) => part !== "")
     .join("\n");

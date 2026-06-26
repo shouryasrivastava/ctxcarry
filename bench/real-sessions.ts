@@ -46,7 +46,7 @@ if (args.out) {
 process.stdout.write(rendered);
 
 function collectReport(root: string): RealSessionReport {
-  const sessionsRoot = path.join(root, ".handoff", "sessions");
+  const sessionsRoot = path.join(root, ".ctxcarry", "sessions");
   const sessionIds = fs.existsSync(sessionsRoot)
     ? fs.readdirSync(sessionsRoot).filter((entry) => fs.statSync(path.join(sessionsRoot, entry)).isDirectory()).sort()
     : [];
@@ -67,15 +67,15 @@ function collectReport(root: string): RealSessionReport {
     },
     rows,
     notes: [
-      "This report uses real local Handoff session artifacts.",
+      "This report uses real local ctxcarry session artifacts.",
       "It does not measure task-success rate or recall unless you separately provide expected facts.",
-      "Use it to inspect real-session compression, summary quality, redaction, changed-file capture, and handoff size."
+      "Use it to inspect real-session compression, summary quality, redaction, changed-file capture, and ctxcarry size."
     ]
   };
 }
 
 function benchmarkSession(root: string, sessionId: string): RealSessionRow {
-  const sessionDir = path.join(root, ".handoff", "sessions", sessionId);
+  const sessionDir = path.join(root, ".ctxcarry", "sessions", sessionId);
   const summaryPath = path.join(sessionDir, "summary.md");
   const summary = fs.existsSync(summaryPath) ? fs.readFileSync(summaryPath, "utf8") : "";
   const rawText = readSessionRawText(sessionDir);
@@ -86,10 +86,10 @@ function benchmarkSession(root: string, sessionId: string): RealSessionRow {
   runCli(root, "switch", "codex");
   const compileLatencyMs = performance.now() - started;
 
-  const handoffPath = path.join(root, ".handoff", "handoffs", "codex.md");
-  const handoff = fs.existsSync(handoffPath) ? fs.readFileSync(handoffPath, "utf8") : "";
+  const ctxcarryPath = path.join(root, ".ctxcarry", "ctxcarrys", "codex.md");
+  const ctxcarry = fs.existsSync(ctxcarryPath) ? fs.readFileSync(ctxcarryPath, "utf8") : "";
   const rawTokens = estimateTokens(rawText);
-  const handoffTokens = estimateTokens(handoff);
+  const handoffTokens = estimateTokens(ctxcarry);
   const savedTokens = rawTokens - handoffTokens;
   const changedFiles = new Set<string>([
     ...arrayOfStrings(before?.changedFiles),
@@ -107,7 +107,7 @@ function benchmarkSession(root: string, sessionId: string): RealSessionRow {
     changedFiles: changedFiles.size,
     exitStatus: inferExitStatus(root, sessionId),
     requiredSectionsPresent: requiredSectionsPresent(summary),
-    redactionPassed: containsKnownFakeSecret(rawText + "\n" + handoff) ? "FAIL" : "PASS",
+    redactionPassed: containsKnownFakeSecret(rawText + "\n" + ctxcarry) ? "FAIL" : "PASS",
     compileLatencyMs
   };
 }
@@ -133,7 +133,7 @@ function requiredSectionsPresent(summary: string): string {
 }
 
 function inferExitStatus(root: string, sessionId: string): string {
-  const eventsPath = path.join(root, ".handoff", "events.jsonl");
+  const eventsPath = path.join(root, ".ctxcarry", "events.jsonl");
   if (!fs.existsSync(eventsPath)) {
     return "not measured";
   }
@@ -148,9 +148,9 @@ function inferExitStatus(root: string, sessionId: string): string {
 
 function renderMarkdown(report: RealSessionReport): string {
   return [
-    "# Handoff Real Session Benchmark Report",
+    "# ctxcarry Real Session Benchmark Report",
     "",
-    "This report is generated from real local `.handoff/sessions` artifacts. It does not fabricate recall or task-success metrics.",
+    "This report is generated from real local `.ctxcarry/sessions` artifacts. It does not fabricate recall or task-success metrics.",
     "",
     "## Environment",
     table(["Field", "Value"], Object.entries(report.environment)),
@@ -175,7 +175,7 @@ function renderMarkdown(report: RealSessionReport): string {
         "Summary",
         "Raw tokens",
         "Summary tokens",
-        "Handoff tokens",
+        "handoff tokens",
         "Compression",
         "Changed files",
         "Exit",
@@ -204,9 +204,9 @@ function renderMarkdown(report: RealSessionReport): string {
     "## Reproduce",
     "",
     "```bash",
-    "handoff init",
-    "handoff run claude",
-    "handoff switch codex",
+    "ctxcarry init",
+    "ctxcarry run claude",
+    "ctxcarry switch codex",
     "pnpm run bench:real -- --project /path/to/your/repo --out REAL_BENCHMARKS.md",
     "```"
   ].join("\n");

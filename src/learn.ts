@@ -1,13 +1,13 @@
 import fs from "node:fs";
-import { handoffPath } from "./paths.js";
+import { ctxcarryPath } from "./paths.js";
 import { readState, writeManagedFile } from "./store.js";
 
 export function learnFromSessions(apply: boolean): string {
   const state = readState();
   const lines = [
-    "# Handoff Learned Guidance",
+    "# ctxcarry Learned Guidance",
     "",
-    "These rules were mined from local Handoff memory. Review before relying on them.",
+    "These rules were mined from local ctxcarry memory. Review before relying on them.",
     "",
     "## Decisions To Preserve",
     ...list(state.episodic.decisions.map((item) => item.content)),
@@ -20,7 +20,7 @@ export function learnFromSessions(apply: boolean): string {
   ];
   const markdown = lines.join("\n");
   if (apply) {
-    fs.writeFileSync(handoffPath("learned.md"), `${markdown}\n`);
+    fs.writeFileSync(ctxcarryPath("learned.md"), `${markdown}\n`);
     writeManagedFile("AGENTS.md", markdown);
     writeManagedFile("CLAUDE.md", markdown);
   }

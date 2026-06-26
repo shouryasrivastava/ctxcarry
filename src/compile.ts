@@ -1,9 +1,9 @@
 import fs from "node:fs";
-import { handoffPath } from "./paths.js";
+import { ctxcarryPath } from "./paths.js";
 import { estimateTokens } from "./tokens.js";
 import { redactText } from "./redact.js";
 import { readConfig, readState, writeHandoff, writeManagedFile } from "./store.js";
-import type { HandoffState } from "./types.js";
+import type { ctxcarryState } from "./types.js";
 
 export function compileAgent(agent: string, budgetTokens?: number): string {
   const config = readConfig();
@@ -11,7 +11,7 @@ export function compileAgent(agent: string, budgetTokens?: number): string {
   const agentConfig = config.agents[agent];
 
   if (!agentConfig?.enabled) {
-    throw new Error(`Agent "${agent}" is not enabled in handoff.config.json.`);
+    throw new Error(`Agent "${agent}" is not enabled in ctxcarry.config.json.`);
   }
 
   const markdown = agent === "claude" ? renderClaude(state, budgetTokens) : renderCodex(state, budgetTokens);
@@ -20,26 +20,26 @@ export function compileAgent(agent: string, budgetTokens?: number): string {
   return agentConfig.output;
 }
 
-export function renderCodex(state: HandoffState, budgetTokens?: number): string {
+export function renderCodex(state: ctxcarryState, budgetTokens?: number): string {
   return packToBudget(() => {
     const body = renderHandoff("Codex Handoff", state);
     return [
-    "# Handoff Project Context",
+    "# ctxcarry Project Context",
     "",
-    "Use this compact project state before continuing work. Treat `.handoff/` as the source of truth for generated context.",
+    "Use this compact project state before continuing work. Treat `.ctxcarry/` as the source of truth for generated context.",
     "",
     body
     ].join("\n");
   }, state, "codex", budgetTokens);
 }
 
-export function renderClaude(state: HandoffState, budgetTokens?: number): string {
+export function renderClaude(state: ctxcarryState, budgetTokens?: number): string {
   return packToBudget(() => {
     const body = renderHandoff("Claude Code Handoff", state);
     return [
-    "# Handoff Memory",
+    "# ctxcarry Memory",
     "",
-    "This file is generated from local Handoff project memory.",
+    "This file is generated from local ctxcarry project memory.",
     "",
     body
     ].join("\n");
@@ -52,16 +52,16 @@ export function renderCurrentHandoff(agent = "codex", budgetTokens?: number): st
 }
 
 export function handoffTokenEstimate(agent = "codex"): number {
-  const handoff = renderCurrentHandoff(agent);
-  return estimateTokens(handoff);
+  const ctxcarry = renderCurrentHandoff(agent);
+  return estimateTokens(ctxcarry);
 }
 
 export function rawEventText(): string {
-  const eventsPath = handoffPath("events.jsonl");
+  const eventsPath = ctxcarryPath("events.jsonl");
   return fs.existsSync(eventsPath) ? fs.readFileSync(eventsPath, "utf8") : "";
 }
 
-function renderHandoff(title: string, state: HandoffState): string {
+function renderHandoff(title: string, state: ctxcarryState): string {
   const sections: string[] = [
     `## ${title}`,
     "",
@@ -86,7 +86,7 @@ function renderHandoff(title: string, state: HandoffState): string {
   return redactText(sections.join("\n"));
 }
 
-function renderNextStep(state: HandoffState): string {
+function renderNextStep(state: ctxcarryState): string {
   const explicit = state.working.nextSteps.at(-1)?.content;
   if (explicit) {
     return explicit;
@@ -98,7 +98,7 @@ function renderNextStep(state: HandoffState): string {
   if (state.working.touchedFiles.length > 0) {
     return "Review the touched files and run the relevant tests.";
   }
-  return "Record the current task with `handoff note --type task --text \"...\"`.";
+  return "Record the current task with `ctxcarry note --type task --text \"...\"`.";
 }
 
 function renderList(items: string[]): string {
@@ -112,13 +112,13 @@ function appendSection(sections: string[], title: string, items: string[]): void
   sections.push("", `### ${title}`, renderList(items));
 }
 
-function packToBudget(render: () => string, state: HandoffState, agent: "codex" | "claude", budgetTokens?: number): string {
+function packToBudget(render: () => string, state: ctxcarryState, agent: "codex" | "claude", budgetTokens?: number): string {
   const full = redactText(render());
   if (!budgetTokens || estimateTokens(full) <= budgetTokens) {
     return full;
   }
 
-  const compactState: HandoffState = {
+  const compactState: ctxcarryState = {
     ...state,
     working: {
       ...state.working,
@@ -144,9 +144,9 @@ function packToBudget(render: () => string, state: HandoffState, agent: "codex" 
   }
 
   const minimum = [
-    agent === "claude" ? "# Handoff Memory" : "# Handoff Project Context",
+    agent === "claude" ? "# ctxcarry Memory" : "# ctxcarry Project Context",
     "",
-    `## ${agent === "claude" ? "Claude Code" : "Codex"} Handoff`,
+    `## ${agent === "claude" ? "Claude Code" : "Codex"} ctxcarry`,
     "",
     "### Current Task",
     truncate(state.working.currentTask, 600),

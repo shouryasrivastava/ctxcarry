@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { HANDOFF_DIR, handoffPath, rootPath } from "./paths.js";
+import { CTXCARRY_DIR, ctxcarryPath, rootPath } from "./paths.js";
 import { redactText, redactValue } from "./redact.js";
-import type { HandoffConfig, HandoffEvent, HandoffState } from "./types.js";
+import type { ctxcarryConfig, ctxcarryEvent, ctxcarryState } from "./types.js";
 
-const DEFAULT_STATE: HandoffState = {
+const DEFAULT_STATE: ctxcarryState = {
   version: 1,
   updatedAt: new Date(0).toISOString(),
   persistent: {
@@ -33,7 +33,7 @@ const DEFAULT_STATE: HandoffState = {
   }
 };
 
-export function defaultConfig(project = path.basename(process.cwd())): HandoffConfig {
+export function defaultConfig(project = path.basename(process.cwd())): ctxcarryConfig {
   return {
     project,
     default_budget_tokens: 12000,
@@ -62,60 +62,60 @@ export function defaultConfig(project = path.basename(process.cwd())): HandoffCo
 }
 
 export function ensureInitialized(): void {
-  if (!fs.existsSync(handoffPath())) {
-    throw new Error("Handoff is not initialized. Run `handoff init` first.");
+  if (!fs.existsSync(ctxcarryPath())) {
+    throw new Error("ctxcarry is not initialized. Run `ctxcarry init` first.");
   }
 }
 
 export function initStore(): void {
-  fs.mkdirSync(handoffPath("summaries"), { recursive: true });
-  fs.mkdirSync(handoffPath("handoffs"), { recursive: true });
-  fs.mkdirSync(handoffPath("index"), { recursive: true });
-  fs.mkdirSync(handoffPath("sessions"), { recursive: true });
+  fs.mkdirSync(ctxcarryPath("summaries"), { recursive: true });
+  fs.mkdirSync(ctxcarryPath("ctxcarrys"), { recursive: true });
+  fs.mkdirSync(ctxcarryPath("index"), { recursive: true });
+  fs.mkdirSync(ctxcarryPath("sessions"), { recursive: true });
 
-  writeFileIfMissing(rootPath("handoff.config.json"), JSON.stringify(defaultConfig(), null, 2) + "\n");
-  writeFileIfMissing(handoffPath("events.jsonl"), "");
-  writeFileIfMissing(handoffPath("commands.jsonl"), "");
-  writeFileIfMissing(handoffPath("state.json"), JSON.stringify(freshState(), null, 2) + "\n");
-  writeFileIfMissing(handoffPath("state.md"), "# Handoff State\n\nNo compacted state yet.\n");
+  writeFileIfMissing(rootPath("ctxcarry.config.json"), JSON.stringify(defaultConfig(), null, 2) + "\n");
+  writeFileIfMissing(ctxcarryPath("events.jsonl"), "");
+  writeFileIfMissing(ctxcarryPath("commands.jsonl"), "");
+  writeFileIfMissing(ctxcarryPath("state.json"), JSON.stringify(freshState(), null, 2) + "\n");
+  writeFileIfMissing(ctxcarryPath("state.md"), "# ctxcarry State\n\nNo compacted state yet.\n");
 }
 
-export function readConfig(): HandoffConfig {
-  const configPath = rootPath("handoff.config.json");
+export function readConfig(): ctxcarryConfig {
+  const configPath = rootPath("ctxcarry.config.json");
   if (!fs.existsSync(configPath)) {
     return defaultConfig();
   }
-  return JSON.parse(fs.readFileSync(configPath, "utf8")) as HandoffConfig;
+  return JSON.parse(fs.readFileSync(configPath, "utf8")) as ctxcarryConfig;
 }
 
-export function readState(): HandoffState {
-  const statePath = handoffPath("state.json");
+export function readState(): ctxcarryState {
+  const statePath = ctxcarryPath("state.json");
   if (!fs.existsSync(statePath)) {
     return freshState();
   }
-  return JSON.parse(fs.readFileSync(statePath, "utf8")) as HandoffState;
+  return JSON.parse(fs.readFileSync(statePath, "utf8")) as ctxcarryState;
 }
 
-export function writeState(state: HandoffState): void {
-  fs.writeFileSync(handoffPath("state.json"), JSON.stringify(redactValue(state), null, 2) + "\n");
+export function writeState(state: ctxcarryState): void {
+  fs.writeFileSync(ctxcarryPath("state.json"), JSON.stringify(redactValue(state), null, 2) + "\n");
 }
 
-export function appendEvent(event: { type: string; timestamp?: string; [key: string]: unknown }): HandoffEvent {
+export function appendEvent(event: { type: string; timestamp?: string; [key: string]: unknown }): ctxcarryEvent {
   ensureInitialized();
   const fullEvent = redactValue({
     ...event,
     timestamp: event.timestamp ?? new Date().toISOString(),
-  }) as HandoffEvent;
-  fs.appendFileSync(handoffPath("events.jsonl"), JSON.stringify(fullEvent) + "\n");
+  }) as ctxcarryEvent;
+  fs.appendFileSync(ctxcarryPath("events.jsonl"), JSON.stringify(fullEvent) + "\n");
   if (fullEvent.type === "command_run") {
-    fs.appendFileSync(handoffPath("commands.jsonl"), JSON.stringify(fullEvent) + "\n");
+    fs.appendFileSync(ctxcarryPath("commands.jsonl"), JSON.stringify(fullEvent) + "\n");
   }
   return fullEvent;
 }
 
-export function readEvents(): HandoffEvent[] {
+export function readEvents(): ctxcarryEvent[] {
   ensureInitialized();
-  const file = handoffPath("events.jsonl");
+  const file = ctxcarryPath("events.jsonl");
   if (!fs.existsSync(file)) {
     return [];
   }
@@ -124,16 +124,16 @@ export function readEvents(): HandoffEvent[] {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as HandoffEvent);
+    .map((line) => JSON.parse(line) as ctxcarryEvent);
 }
 
 export function writeMarkdownState(markdown: string): void {
   const redacted = redactText(markdown);
-  fs.writeFileSync(handoffPath("state.md"), redacted.endsWith("\n") ? redacted : redacted + "\n");
+  fs.writeFileSync(ctxcarryPath("state.md"), redacted.endsWith("\n") ? redacted : redacted + "\n");
 }
 
 export function writeHandoff(agent: string, markdown: string): string {
-  const output = handoffPath("handoffs", `${agent}.md`);
+  const output = ctxcarryPath("ctxcarrys", `${agent}.md`);
   const redacted = redactText(markdown);
   fs.writeFileSync(output, redacted.endsWith("\n") ? redacted : redacted + "\n");
   return output;
@@ -142,8 +142,8 @@ export function writeHandoff(agent: string, markdown: string): string {
 export function writeManagedFile(filePath: string, markdown: string): void {
   const absolutePath = rootPath(filePath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-  const start = "<!-- handoff:start -->";
-  const end = "<!-- handoff:end -->";
+  const start = "<!-- ctxcarry:start -->";
+  const end = "<!-- ctxcarry:end -->";
   const block = `${start}\n${redactText(markdown).trim()}\n${end}`;
 
   if (!fs.existsSync(absolutePath)) {
@@ -157,7 +157,7 @@ export function writeManagedFile(filePath: string, markdown: string): void {
   fs.writeFileSync(absolutePath, next.endsWith("\n") ? next : next + "\n");
 }
 
-export function freshState(): HandoffState {
+export function freshState(): ctxcarryState {
   return {
     ...DEFAULT_STATE,
     updatedAt: new Date().toISOString(),
@@ -190,6 +190,6 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function handoffDirName(): string {
-  return HANDOFF_DIR;
+export function ctxcarryDirName(): string {
+  return CTXCARRY_DIR;
 }

@@ -1,7 +1,7 @@
-import type { HandoffEvent, HandoffState, MemoryItem } from "./types.js";
+import type { ctxcarryEvent, ctxcarryState, MemoryItem } from "./types.js";
 import { freshState, readEvents, writeMarkdownState, writeState } from "./store.js";
 
-export function compactState(): HandoffState {
+export function compactState(): ctxcarryState {
   const events = readEvents();
   const state = freshState();
 
@@ -17,9 +17,9 @@ export function compactState(): HandoffState {
   return state;
 }
 
-export function renderStateMarkdown(state: HandoffState): string {
+export function renderStateMarkdown(state: ctxcarryState): string {
   return [
-    "# Handoff State",
+    "# ctxcarry State",
     "",
     "## Current Task",
     state.working.currentTask,
@@ -47,7 +47,7 @@ export function renderStateMarkdown(state: HandoffState): string {
   ].join("\n");
 }
 
-function applyEvent(state: HandoffState, event: HandoffEvent): void {
+function applyEvent(state: ctxcarryState, event: ctxcarryEvent): void {
   switch (event.type) {
     case "note":
       applyNote(state, event);
@@ -70,7 +70,7 @@ function applyEvent(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applyNote(state: HandoffState, event: HandoffEvent): void {
+function applyNote(state: ctxcarryState, event: ctxcarryEvent): void {
   const noteType = String(event.noteType ?? "");
   const content = String(event.content ?? "").trim();
   if (!content) {
@@ -97,7 +97,7 @@ function applyNote(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applySnapshot(state: HandoffState, event: HandoffEvent): void {
+function applySnapshot(state: ctxcarryState, event: ctxcarryEvent): void {
   const branch = typeof event.branch === "string" ? event.branch : null;
   const files = Array.isArray(event.changedFiles) ? event.changedFiles.filter((file): file is string => typeof file === "string") : [];
   state.working.currentBranch = branch;
@@ -108,7 +108,7 @@ function applySnapshot(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applySession(state: HandoffState, event: HandoffEvent): void {
+function applySession(state: ctxcarryState, event: ctxcarryEvent): void {
   const agent = typeof event.agent === "string" ? event.agent : "unknown";
   const exitCode = typeof event.exitCode === "number" ? event.exitCode : null;
   const summary = exitCode === 0 ? `${agent} session completed.` : `${agent} session exited with code ${exitCode ?? "unknown"}.`;
@@ -124,7 +124,7 @@ function applySession(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applyFileChanged(state: HandoffState, event: HandoffEvent): void {
+function applyFileChanged(state: ctxcarryState, event: ctxcarryEvent): void {
   const file = typeof event.path === "string" ? event.path : "";
   if (file) {
     state.working.touchedFiles.push(file);
@@ -132,7 +132,7 @@ function applyFileChanged(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applyFallback(state: HandoffState, event: HandoffEvent): void {
+function applyFallback(state: ctxcarryState, event: ctxcarryEvent): void {
   if (typeof event.branch === "string") {
     state.working.currentBranch = event.branch;
   }
@@ -146,7 +146,7 @@ function applyFallback(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function applyCommand(state: HandoffState, event: HandoffEvent): void {
+function applyCommand(state: ctxcarryState, event: ctxcarryEvent): void {
   const command = String(event.command ?? "").trim();
   if (!command) {
     return;
@@ -158,7 +158,7 @@ function applyCommand(state: HandoffState, event: HandoffEvent): void {
   }
 }
 
-function toMemoryItem(event: HandoffEvent, content: string): MemoryItem {
+function toMemoryItem(event: ctxcarryEvent, content: string): MemoryItem {
   return {
     content,
     timestamp: event.timestamp,
@@ -181,7 +181,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort();
 }
 
-function postProcessState(state: HandoffState): void {
+function postProcessState(state: ctxcarryState): void {
   state.working.touchedFiles = unique(state.working.touchedFiles.map(summarizeDiffPath));
   state.working.lastCommands = dedupeStrings(state.working.lastCommands).slice(-10);
   state.working.constraints = dedupeMemoryItems(state.working.constraints);
