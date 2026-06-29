@@ -12,6 +12,11 @@ export interface ctxcarryConfig {
   project: string;
   default_budget_tokens: number;
   agents: Record<string, AgentConfig>;
+  availableAgents?: string[];
+  packageManager?: string;
+  verify?: {
+    commands: string[];
+  };
   ignore: string[];
   capture: {
     git_diff: boolean;

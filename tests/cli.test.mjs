@@ -246,6 +246,123 @@ function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-test-"));
 }
 
+test("setup detects package manager and verify commands", () => {
+  const cwd = makeTempDir();
+  fs.writeFileSync(path.join(cwd, "pnpm-lock.yaml"), "");
+  fs.writeFileSync(
+    path.join(cwd, "package.json"),
+    JSON.stringify({ scripts: { test: "node test.js", lint: "eslint .", typecheck: "tsc", build: "tsc -p ." } }),
+  );
+
+  const output = execFileSync("node", [cli, "setup"], { cwd, encoding: "utf8" });
+  const config = JSON.parse(fs.readFileSync(path.join(cwd, "ctxcarry.config.json"), "utf8"));
+
+  assert.match(output, /ctxcarry setup complete/);
+  assert.equal(config.packageManager, "pnpm");
+  assert.deepEqual(config.verify.commands, ["pnpm test", "pnpm lint", "pnpm typecheck", "pnpm build"]);
+  assert.ok(fs.existsSync(path.join(cwd, ".ctxcarry", "board.md")));
+});
+
+test("enter codex prepares handoff and launches mocked command", () => {
+  const cwd = makeTempDir();
+  const bin = path.join(cwd, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "codex"), `#!/bin/sh\necho launched > "${path.join(cwd, "codex.log")}"\n`);
+  fs.chmodSync(path.join(bin, "codex"), 0o755);
+
+  execFileSync("node", [cli, "init"], { cwd });
+  execFileSync("node", [cli, "note", "--type", "task", "--text", "Fix launch flow"], { cwd });
+  execFileSync("node", [cli, "enter", "codex"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+  });
+
+  assert.equal(fs.readFileSync(path.join(cwd, "codex.log"), "utf8").trim(), "launched");
+  assert.match(fs.readFileSync(path.join(cwd, "AGENTS.md"), "utf8"), /Codex Handoff/);
+});
+
+test("verify records pass fail summaries and redacts secrets", () => {
+  const cwd = makeTempDir();
+  execFileSync("node", [cli, "init"], { cwd });
+  const configPath = path.join(cwd, "ctxcarry.config.json");
+  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  config.verify = {
+    commands: [
+      "node -e \"console.log('ok')\"",
+      "node -e \"console.error('OPENAI_API_KEY=sk-test-123'); process.exit(1)\"",
+    ],
+  };
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+  assert.throws(() => execFileSync("node", [cli, "verify"], { cwd, encoding: "utf8" }));
+  const latest = fs.readFileSync(path.join(cwd, ".ctxcarry", "verification", "latest.md"), "utf8");
+  const events = fs.readFileSync(path.join(cwd, ".ctxcarry", "events.jsonl"), "utf8");
+
+  assert.match(latest, /Status: FAIL/);
+  assert.doesNotMatch(latest, /sk-test-123/);
+  assert.match(events, /verification/);
+});
+
+test("worktree create stores metadata and clean requires force", () => {
+  const cwd = makeTempDir();
+  fs.writeFileSync(path.join(cwd, "README.md"), "test\n");
+  execFileSync("git", ["init"], { cwd });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd });
+  execFileSync("git", ["add", "README.md"], { cwd });
+  execFileSync("git", ["commit", "-m", "init"], { cwd });
+  execFileSync("node", [cli, "init"], { cwd });
+
+  execFileSync("node", [cli, "worktree", "create", "Fix failing tests"], { cwd });
+  const records = JSON.parse(fs.readFileSync(path.join(cwd, ".ctxcarry", "worktrees.json"), "utf8"));
+  assert.equal(records.length, 1);
+  assert.equal(records[0].task, "Fix failing tests");
+  assert.match(records[0].branch, /^ctxcarry\/fix-failing-tests/);
+
+  assert.throws(() => execFileSync("node", [cli, "worktree", "clean"], { cwd }));
+  execFileSync("node", [cli, "worktree", "clean", "--force"], { cwd });
+});
+
+test("loop persists state and evaluator receives verification summary", () => {
+  const cwd = makeTempDir();
+  const bin = path.join(cwd, "bin");
+  const seen = path.join(cwd, "evaluator-seen.md");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "ctxcarry"), "#!/bin/sh\nexit 0\n");
+  fs.writeFileSync(
+    path.join(bin, "codex"),
+    `#!/bin/sh\nprintf "%s" "$CTXCARRY_EVALUATOR_INSTRUCTIONS" > "${seen}"\nprintf "PASS\\nOPENAI_API_KEY=sk-test-123\\n" > "$CTXCARRY_VERDICT_PATH"\n`,
+  );
+  fs.chmodSync(path.join(bin, "ctxcarry"), 0o755);
+  fs.chmodSync(path.join(bin, "codex"), 0o755);
+  fs.writeFileSync(path.join(cwd, "package.json"), JSON.stringify({ scripts: { test: "node -e \"console.log('ok')\"" } }));
+  fs.writeFileSync(path.join(cwd, "pnpm-lock.yaml"), "");
+  execFileSync("git", ["init"], { cwd });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd });
+  execFileSync("git", ["add", "package.json", "pnpm-lock.yaml"], { cwd });
+  execFileSync("git", ["commit", "-m", "init"], { cwd });
+  execFileSync("node", [cli, "setup"], { cwd });
+  const configPath = path.join(cwd, "ctxcarry.config.json");
+  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  config.verify = { commands: ["node -e \"console.log('verification ok')\""] };
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+  execFileSync("node", [cli, "loop", "--task", "Fix failing tests", "--generator", "claude", "--evaluator", "codex"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+  });
+
+  const loopsDir = path.join(cwd, ".ctxcarry", "loops");
+  const loopIds = fs.readdirSync(loopsDir);
+  assert.equal(loopIds.length, 1);
+  const verdict = fs.readFileSync(path.join(loopsDir, loopIds[0], "verdict.md"), "utf8");
+  assert.match(verdict, /PASS/);
+  assert.doesNotMatch(verdict, /sk-test-123/);
+  assert.match(fs.readFileSync(seen, "utf8"), /verification ok/);
+  assert.match(fs.readFileSync(path.join(cwd, ".ctxcarry", "board.md"), "utf8"), /Done/);
+});
+
 function writeAgentScript(cwd, source) {
   fs.writeFileSync(path.join(cwd, "agent.mjs"), source);
 }

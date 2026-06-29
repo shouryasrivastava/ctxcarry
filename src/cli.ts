@@ -6,6 +6,12 @@ import { learnFromSessions } from "./learn.js";
 import { serveMcp } from "./mcp-server.js";
 import { estimateSavings, estimateTokens } from "./tokens.js";
 import { appendEvent, ctxcarryDirName, ensureInitialized, initStore, readState } from "./store.js";
+import { setupCommand } from "./setup.js";
+import { enterCommand } from "./enter.js";
+import { verifyCommand } from "./verify.js";
+import { worktreeCommand } from "./worktree.js";
+import { loopCommand } from "./loop.js";
+import { boardCommand } from "./board.js";
 
 interface ParsedArgs {
   command?: string;
@@ -27,6 +33,9 @@ async function main(): Promise<void> {
       case "init":
         initStore();
         console.log(`Initialized ${ctxcarryDirName()}/ and ctxcarry.config.json`);
+        return;
+      case "setup":
+        setupCommand(args);
         return;
       case "capture":
         ensureInitialized();
@@ -57,6 +66,25 @@ async function main(): Promise<void> {
       case "switch":
         ensureInitialized();
         switchCommand(args);
+        return;
+      case "enter":
+        ensureInitialized();
+        enterCommand(args);
+        return;
+      case "verify":
+        verifyCommand();
+        return;
+      case "worktree":
+        ensureInitialized();
+        worktreeCommand(args);
+        return;
+      case "loop":
+        ensureInitialized();
+        loopCommand(args);
+        return;
+      case "board":
+        ensureInitialized();
+        boardCommand();
         return;
       case "status":
         ensureInitialized();
