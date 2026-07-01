@@ -4,12 +4,13 @@
   <img src="./assets/ctxcarry-ascii.svg" width="100%" alt="ctxcarry" />
 </p>
 
-Local-first loop engineering for coding agents.
+`ctxcarry` keeps agent work durable across Claude, Codex, and other local coding
+tools. It records what happened, prepares compact handoffs, runs verification,
+isolates tasks in git worktrees, and can run generator/evaluator loops on a
+schedule.
 
-ctxcarry helps developers run Claude, Codex, and other coding agents without losing context, polluting the main repo, or trusting unreviewed generated code.
-
-It stores durable project memory in `.ctxcarry/`, writes compact handoffs for the next agent, runs verification, isolates work in git worktrees, and supports generator/evaluator loops where one agent writes the change and another reviews it.
-
+The goal is simple: make agent work reviewable, repeatable, and recoverable
+without sending your project state to a hosted coordination service.
 The core idea:
 
 Coding agents should not own your context. Your repo should.
@@ -18,27 +19,7 @@ Coding agents should not own your context. Your repo should.
 
 ![ctxcarry demo](./ctxcarry%20gif.gif)
 
-Before asking for stars, add:
 
-- `LICENSE`
-- `SECURITY.md`
-- `CODE_OF_CONDUCT.md`
-- `docs/demo.md`
-- `docs/loop-engineering.md`
-- `examples/`
-- `assets/demo.gif`
-- GitHub Actions CI badge
-- npm package publishing, if ready
-
-Local-first memory, handoff, and loop orchestration for coding agents.
-
-`ctxcarry` keeps agent work durable across Claude, Codex, and other local coding
-tools. It records what happened, prepares compact handoffs, runs verification,
-isolates tasks in git worktrees, and can run generator/evaluator loops on a
-schedule.
-
-The goal is simple: make agent work reviewable, repeatable, and recoverable
-without sending your project state to a hosted coordination service.
 
 ## What It Does
 
