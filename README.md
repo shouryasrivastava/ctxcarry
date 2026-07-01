@@ -19,24 +19,6 @@ Coding agents should not own your context. Your repo should.
 
 ![ctxcarry demo](./ctxcarry%20gif.gif)
 
-
-
-## What It Does
-
-- Stores durable project memory under `.ctxcarry/`.
-- Captures session summaries, decisions, constraints, failures, and next steps.
-- Writes handoff blocks into `AGENTS.md` or `CLAUDE.md`.
-- Runs verification and stores pass/fail artifacts.
-- Creates isolated git worktrees for agent tasks.
-- Runs generator/evaluator loops so the author does not grade its own work.
-- Discovers local tasks from failed checks, board items, failed loops, and TODOs.
-- Schedules unattended local loops with macOS `launchd`.
-- Keeps token use under control with compact handoffs, trimmed artifacts, and loop limits.
-
-## Security Note
-
-Unknown repositories and agents can be risky. Treat agent execution as untrusted automation: review setup commands, inspect diffs, run verification, and prefer isolated worktrees before letting generated changes near your main checkout. Recent reporting around AI coding agents has highlighted how agents can be manipulated into running malicious setup commands from seemingly normal repositories, so ctxcarry is designed around local state, reviewable artifacts, verification, and generator/evaluator separation.
-
 ## Quick Start
 
 Install and build from this repository:
@@ -74,6 +56,18 @@ Discover local work and run the top task:
 ctxcarry discover
 ctxcarry loop --from-discovery --generator codex --evaluator codex
 ```
+
+## What It Does
+
+- Stores durable project memory under `.ctxcarry/`.
+- Captures session summaries, decisions, constraints, failures, and next steps.
+- Writes handoff blocks into `AGENTS.md` or `CLAUDE.md`.
+- Runs verification and stores pass/fail artifacts.
+- Creates isolated git worktrees for agent tasks.
+- Runs generator/evaluator loops so the author does not grade its own work.
+- Discovers local tasks from failed checks, board items, failed loops, and TODOs.
+- Schedules unattended local loops with macOS `launchd`.
+- Keeps token use under control with compact handoffs, trimmed artifacts, and loop limits.
 
 ## How It Works
 
@@ -364,3 +358,7 @@ Useful scripts:
 ctxcarry is local-first agent infrastructure. It is intentionally plain:
 Markdown, JSON, git worktrees, shell commands, and MCP. The core idea is not to
 hide agent work. The core idea is to make it inspectable.
+
+## Security Note
+
+Unknown repositories and agents can be risky. Treat agent execution as untrusted automation: review setup commands, inspect diffs, run verification, and prefer isolated worktrees before letting generated changes near your main checkout. Recent reporting around AI coding agents has highlighted how agents can be manipulated into running malicious setup commands from seemingly normal repositories, so ctxcarry is designed around local state, reviewable artifacts, verification, and generator/evaluator separation.
