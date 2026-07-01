@@ -1,124 +1,355 @@
 # ctxcarry
 
-Local-first context carryover for coding-agent workflows.
+<p align="center">
+  <img src="./assets/ctxcarry-ascii.svg" width="100%" alt="ctxcarry" />
+</p>
 
-```bash
-npm install -g ctxcarry
-ctxcarry setup
-ctxcarry run claude
-ctxcarry enter codex
-```
+Local-first memory, handoff, and loop orchestration for coding agents.
 
-`ctxcarry` keeps Claude Code and Codex working from the same local state. It captures session context, compacts it, prepares handoffs, runs verification, and can isolate tasks in git worktrees.
+`ctxcarry` keeps agent work durable across Claude, Codex, and other local coding
+tools. It records what happened, prepares compact handoffs, runs verification,
+isolates tasks in git worktrees, and can run generator/evaluator loops on a
+schedule.
+
+The goal is simple: make agent work reviewable, repeatable, and recoverable
+without sending your project state to a hosted coordination service.
+
+## What It Does
+
+- Stores durable project memory under `.ctxcarry/`.
+- Captures session summaries, decisions, constraints, failures, and next steps.
+- Writes handoff blocks into `AGENTS.md` or `CLAUDE.md`.
+- Runs verification and stores pass/fail artifacts.
+- Creates isolated git worktrees for agent tasks.
+- Runs generator/evaluator loops so the author does not grade its own work.
+- Discovers local tasks from failed checks, board items, failed loops, and TODOs.
+- Schedules unattended local loops with macOS `launchd`.
+- Keeps token use under control with compact handoffs, trimmed artifacts, and loop limits.
 
 ## Quick Start
 
-Inside a project:
+Install and build from this repository:
 
 ```bash
-ctxcarry setup
-ctxcarry run claude
-ctxcarry enter codex
+pnpm install
+pnpm build
+npm install -g .
 ```
 
-`ctxcarry setup` creates `.ctxcarry/`, detects package-manager verification commands, detects local agent commands, writes `ctxcarry.config.json`, and creates `.ctxcarry/board.md`.
-
-The current manual workflow still works:
+Initialize a project:
 
 ```bash
-ctxcarry run claude
-ctxcarry switch codex
-codex
+ctxcarry init
 ```
 
-## Commands
+Run a normal wrapped agent session:
 
 ```bash
-ctxcarry setup
-ctxcarry setup --aliases
-ctxcarry run claude
-ctxcarry enter codex
-ctxcarry enter codex --no-launch
-ctxcarry verify
-ctxcarry board
+ctxcarry run codex
 ```
 
-`ctxcarry setup --aliases` prints optional shell aliases:
+Run a generator/evaluator loop:
 
 ```bash
-alias claude='ctxcarry run claude --'
-alias codex='ctxcarry enter codex --'
+ctxcarry loop \
+  --task "Fix the failing tests" \
+  --generator codex \
+  --evaluator codex
 ```
 
-## Verification
+Discover local work and run the top task:
 
-`ctxcarry verify` reads `verify.commands` from `ctxcarry.config.json`, runs each command, and writes:
+```bash
+ctxcarry discover
+ctxcarry loop --from-discovery --generator codex --evaluator codex
+```
+
+## How It Works
+
+```text
+Repo
+  |
+  |  ctxcarry discover
+  v
+Discovered task
+  |
+  |  ctxcarry loop
+  v
+Isolated git worktree
+  |
+  |  generator agent writes changes
+  v
+Verification runs in that worktree
+  |
+  |  evaluator agent reviews diff + verification
+  v
+Verdict: PASS / FAIL / NEEDS_REVIEW
+  |
+  v
+.ctxcarry/board.md + .ctxcarry/loops/<id>/
+```
+
+The important rule is separation: the generator writes the change, and the
+evaluator assumes the change is broken until it proves otherwise.
+
+## Core Concepts
+
+### Memory
+
+ctxcarry writes local state to disk:
+
+```text
+.ctxcarry/state.json
+.ctxcarry/state.md
+.ctxcarry/events.jsonl
+.ctxcarry/sessions/<session-id>/
+```
+
+Sessions are expected to write a short `summary.md` with durable state. Future
+agents can continue from that summary without rereading the entire conversation.
+
+### Handoffs
+
+Compile a handoff for another agent:
+
+```bash
+ctxcarry compile --agent codex --budget 4000
+ctxcarry switch claude --budget 4000
+```
+
+For Codex, ctxcarry writes a managed block in `AGENTS.md`. For Claude, it writes
+to `CLAUDE.md`.
+
+### Verification
+
+`ctxcarry verify` runs the configured commands from `ctxcarry.config.json` and
+stores artifacts:
 
 ```text
 .ctxcarry/verification/latest.md
 .ctxcarry/verification/<timestamp>.json
 ```
 
-Verification events are appended to `.ctxcarry/events.jsonl`. Command output is summarized and redacted before it is stored.
+Typical generated config for this repo:
 
-## Worktrees
+```json
+{
+  "verify": {
+    "commands": ["pnpm test", "pnpm build"]
+  }
+}
+```
+
+### Worktrees
+
+Worktrees keep agent tasks isolated from your main checkout:
 
 ```bash
-ctxcarry worktree create "Fix failing tests"
+ctxcarry worktree create "Fix flaky test"
 ctxcarry worktree list
-ctxcarry worktree clean
 ctxcarry worktree clean --force
 ```
 
-Worktrees use `git worktree` when the current project supports it. Metadata is stored in `.ctxcarry/worktrees.json`. `clean` refuses to remove worktrees unless `--force` is passed.
+Loop runs use this same idea automatically.
 
-## Advanced: Loops
+### Loops
+
+Run one task through a generator and evaluator:
 
 ```bash
-ctxcarry loop --task "Fix failing tests" --generator claude --evaluator codex
+ctxcarry loop \
+  --task "Improve README command examples" \
+  --generator codex \
+  --evaluator codex
 ```
 
-The loop command creates an isolated worktree, runs the generator through the existing `ctxcarry run` flow, runs verification, and launches the evaluator with verification and diff summaries. Loop state is stored in:
+Loop artifacts are written to:
 
 ```text
-.ctxcarry/loops/<loop-id>/
+.ctxcarry/loops/<loop-id>/task.txt
+.ctxcarry/loops/<loop-id>/diff.md
+.ctxcarry/loops/<loop-id>/verification.md
+.ctxcarry/loops/<loop-id>/evaluator.md
+.ctxcarry/loops/<loop-id>/verdict.md
 ```
 
-Evaluators are instructed to assume the generator made mistakes, inspect the diff, run or review verification, look for regressions, and return `PASS`, `FAIL`, or `NEEDS_REVIEW` with reasons.
+The evaluator writes one of:
 
-## Board
+```text
+PASS
+FAIL
+NEEDS_REVIEW
+```
+
+### Discovery
+
+Discovery finds local work:
 
 ```bash
-ctxcarry board
+ctxcarry discover
+ctxcarry discover --skip-verify --limit 5
+ctxcarry discover --json
 ```
 
-The board lives at `.ctxcarry/board.md` and tracks task status as `Todo`, `In Progress`, `Verifying`, `Done`, `Failed`, or `Needs Review`.
+Current sources:
 
-## Safety
+- failed `ctxcarry verify`
+- `.ctxcarry/board.md` tasks
+- failed or incomplete loop verdicts
+- `TODO` and `FIXME` markers
 
-ctxcarry stores state locally under `.ctxcarry/` and `ctxcarry.config.json`. It does not require a hosted service.
+Discovery writes:
 
-Safety features:
+```text
+.ctxcarry/discovery/latest.md
+.ctxcarry/discovery/latest.json
+```
 
-- Worktrees isolate agent tasks from the main checkout.
-- Verification results record pass/fail status, duration, summaries, and failing commands.
-- Stored verification and evaluator outputs are redacted for common secret patterns.
-- Worktree cleanup requires explicit confirmation with `--force`.
+### Scheduling
+
+Install a local macOS schedule:
+
+```bash
+ctxcarry schedule install \
+  --every 1h \
+  --limit 1 \
+  --allow-dirty \
+  --generator codex \
+  --evaluator codex \
+  --timeout-seconds 1800
+```
+
+Run it manually:
+
+```bash
+ctxcarry schedule run \
+  --limit 1 \
+  --allow-dirty \
+  --generator codex \
+  --evaluator codex \
+  --timeout-seconds 1800
+```
+
+Inspect or remove it:
+
+```bash
+ctxcarry schedule status
+ctxcarry schedule uninstall
+```
+
+Schedule logs are stored in:
+
+```text
+.ctxcarry/schedule/
+```
+
+## Token Control
+
+Loop engineering can get expensive. ctxcarry uses a conservative default model:
+
+- compact handoffs instead of full transcripts
+- summarized verification output
+- trimmed diff artifacts in evaluator prompts
+- one scheduled loop per run by default
+- explicit timeouts for scheduled jobs
+- token estimates via `ctxcarry tokens`
+
+Useful commands:
+
+```bash
+ctxcarry tokens --agent codex --budget 4000
+ctxcarry compact
+```
+
+Recommended operating pattern:
+
+- Use cheap/default agents for discovery and simple tasks.
+- Use stronger or more expensive models only for high-risk generator/evaluator runs.
+- Keep scheduled runs limited until the loop has proven useful on real work.
+- Do not treat a `PASS` verdict as a substitute for human judgment on important code.
+
+## Command Reference
+
+```text
+ctxcarry init
+ctxcarry setup [--aliases]
+ctxcarry capture [--agent claude]
+ctxcarry note --type decision|failure|todo|constraint|task|next|resolved --text "..."
+ctxcarry run <agent> [--prompt "..."]
+ctxcarry enter <agent> [--no-launch]
+ctxcarry compact
+ctxcarry compile --agent codex|claude [--budget 4000]
+ctxcarry switch <agent> [--budget 4000]
+ctxcarry verify
+ctxcarry board
+ctxcarry worktree <create|list|clean>
+ctxcarry discover [--limit 10] [--json] [--skip-verify]
+ctxcarry loop --task "..." --generator codex --evaluator codex
+ctxcarry loop --from-discovery [--limit 1] [--allow-dirty]
+ctxcarry schedule <install|uninstall|status|run>
+ctxcarry status
+ctxcarry tokens [--agent codex] [--budget 4000]
+ctxcarry learn [--apply]
+ctxcarry mcp serve
+```
 
 ## MCP Retrieval
 
-ctxcarry can expose local session memory to MCP-compatible tools:
+ctxcarry can expose local session memory to MCP-compatible clients:
 
 ```bash
 ctxcarry mcp serve
 ```
 
-Available tools include `get_relevant_session_events` and `expand_session_artifact`.
+Available tools include:
+
+- `get_relevant_session_events`
+- `expand_session_artifact`
+
+## When To Use It
+
+Use ctxcarry when you:
+
+- work with multiple coding agents
+- want durable context across sessions
+- need local worktree isolation
+- want evaluator review before trusting generated code
+- want scheduled maintenance loops while keeping state local
+
+Skip or keep it manual when:
+
+- the repo has weak or unreliable verification
+- the task requires high product judgment
+- token cost matters more than automation
+- you are not prepared to review generated changes
+
+## Safety Notes
+
+- Generated work happens in git worktrees.
+- Verification results and verdicts are stored on disk.
+- Secret-looking values are redacted in stored outputs.
+- Worktree cleanup requires `--force`.
+- Scheduled jobs should use `--timeout-seconds`.
+- Commit ctxcarry changes before relying on loop worktrees; worktrees are based on git state.
 
 ## Development
 
 ```bash
 pnpm install
+pnpm build
 pnpm test
 pnpm run bench
 ```
+
+Useful scripts:
+
+- `pnpm build` compiles TypeScript.
+- `pnpm test` builds and runs the Node test suite.
+- `pnpm run smoke` builds and prints CLI help.
+- `pnpm run bench` runs benchmark tooling.
+
+## Status
+
+ctxcarry is local-first agent infrastructure. It is intentionally plain:
+Markdown, JSON, git worktrees, shell commands, and MCP. The core idea is not to
+hide agent work. The core idea is to make it inspectable.

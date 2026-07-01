@@ -1,6 +1,6 @@
 {
   "name": "ctxcarry",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Portable project memory and handoff context for AI coding agents.",
   "type": "module",
   "bin": {

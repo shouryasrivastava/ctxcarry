@@ -33,8 +33,8 @@ export function verifyCommand(): VerificationResult {
   return result;
 }
 
-export function runVerifyCommands(commands: string[]): VerificationResult {
-  const results = commands.map(runVerifyCommand);
+export function runVerifyCommands(commands: string[], cwd = process.cwd()): VerificationResult {
+  const results = commands.map((command) => runVerifyCommand(command, cwd));
   return {
     timestamp: new Date().toISOString(),
     passed: results.every((item) => item.passed),
@@ -70,11 +70,11 @@ export function renderVerificationSummary(result: VerificationResult): string {
   return `Verification failed: ${failed.map((command) => command.command).join(", ")}`;
 }
 
-function runVerifyCommand(command: string): VerificationCommandResult {
+function runVerifyCommand(command: string, cwd: string): VerificationCommandResult {
   const started = Date.now();
   try {
     const stdout = execSync(command, {
-      cwd: process.cwd(),
+      cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });

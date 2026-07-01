@@ -279,6 +279,49 @@ test("enter codex prepares handoff and launches mocked command", () => {
 
   assert.equal(fs.readFileSync(path.join(cwd, "codex.log"), "utf8").trim(), "launched");
   assert.match(fs.readFileSync(path.join(cwd, "AGENTS.md"), "utf8"), /Codex Handoff/);
+  assert.equal(fs.existsSync(path.join(cwd, cwd.slice(1), "AGENTS.md")), false);
+});
+
+test("run passes prompt to agent command", () => {
+  const cwd = makeTempDir();
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-bin-"));
+  fs.writeFileSync(
+    path.join(bin, "codex"),
+    `#!/bin/sh
+printf "%s" "$*" > "${path.join(cwd, "prompt.log")}"
+cat > "$CTXCARRY_SESSION_SUMMARY" <<'EOF'
+## Current Task
+Use prompt
+
+## Files Changed
+- None
+
+## Decisions
+- None
+
+## Constraints
+- None
+
+## Failures
+- None
+
+## Commands Run
+- None
+
+## Next Step
+Done
+EOF
+`,
+  );
+  fs.chmodSync(path.join(bin, "codex"), 0o755);
+
+  execFileSync("node", [cli, "init"], { cwd });
+  execFileSync("node", [cli, "run", "codex", "--prompt", "Fix launch flow"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+  });
+
+  assert.equal(fs.readFileSync(path.join(cwd, "prompt.log"), "utf8"), "exec Fix launch flow");
 });
 
 test("verify records pass fail summaries and redacts secrets", () => {
@@ -359,8 +402,170 @@ test("loop persists state and evaluator receives verification summary", () => {
   const verdict = fs.readFileSync(path.join(loopsDir, loopIds[0], "verdict.md"), "utf8");
   assert.match(verdict, /PASS/);
   assert.doesNotMatch(verdict, /sk-test-123/);
-  assert.match(fs.readFileSync(seen, "utf8"), /verification ok/);
+  assert.match(fs.readFileSync(seen, "utf8"), /Verification/);
+  assert.match(fs.readFileSync(seen, "utf8"), /\.ctxcarry\/evaluator-verdict\.md/);
   assert.match(fs.readFileSync(path.join(cwd, ".ctxcarry", "board.md"), "utf8"), /Done/);
+});
+
+test("loop verifies the generated worktree", () => {
+  const cwd = makeTempDir();
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-bin-"));
+  const verdictPath = path.join(cwd, "seen-verdict-path.txt");
+  const evaluatorInstructions = path.join(cwd, "seen-evaluator-instructions.txt");
+  fs.writeFileSync(
+    path.join(bin, "ctxcarry"),
+    `#!/bin/sh
+if [ "$1" = "setup" ]; then
+  exit 0
+fi
+if [ "$1" = "run" ]; then
+  cat > package.json <<'JSON'
+{
+  "scripts": {
+    "test": "node -e \"process.exit(1)\""
+  }
+}
+JSON
+  exit 0
+fi
+exec node "${cli}" "$@"
+`,
+  );
+  fs.writeFileSync(
+    path.join(bin, "codex"),
+    `#!/bin/sh
+printf "%s" "$CTXCARRY_VERDICT_PATH" > "${verdictPath}"
+printf "%s" "$CTXCARRY_EVALUATOR_INSTRUCTIONS" > "${evaluatorInstructions}"
+printf "PASS\\n" > "$CTXCARRY_VERDICT_PATH"
+`,
+  );
+  fs.writeFileSync(path.join(bin, "pnpm"), "#!/bin/sh\necho generated worktree verification failed >&2\nexit 1\n");
+  fs.chmodSync(path.join(bin, "ctxcarry"), 0o755);
+  fs.chmodSync(path.join(bin, "codex"), 0o755);
+  fs.chmodSync(path.join(bin, "pnpm"), 0o755);
+
+  fs.writeFileSync(path.join(cwd, "package.json"), JSON.stringify({ scripts: { test: "node -e \"process.exit(0)\"" } }, null, 2));
+  fs.writeFileSync(path.join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+  execFileSync("git", ["init"], { cwd, stdio: "ignore" });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd });
+  execFileSync("git", ["add", "package.json", "pnpm-lock.yaml"], { cwd });
+  execFileSync("git", ["commit", "-m", "init"], { cwd, stdio: "ignore" });
+
+  execFileSync("node", [cli, "setup"], { cwd });
+  execFileSync("node", [cli, "loop", "--task", "Break generated worktree", "--generator", "codex", "--evaluator", "codex"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+    encoding: "utf8",
+  });
+
+  const loops = fs.readdirSync(path.join(cwd, ".ctxcarry", "loops")).sort();
+  const verification = fs.readFileSync(path.join(cwd, ".ctxcarry", "loops", loops[loops.length - 1], "verification.md"), "utf8");
+  assert.match(verification, /Verification failed: pnpm test/);
+});
+
+test("discover writes ranked local tasks", () => {
+  const cwd = makeTempDir();
+  execFileSync("node", [cli, "init"], { cwd });
+  fs.writeFileSync(path.join(cwd, ".ctxcarry", "board.md"), "# ctxcarry Board\n\n| Status | Task | Updated |\n| --- | --- | --- |\n| Failed | Fix flaky smoke test | 2026-01-01T00:00:00.000Z |\n");
+
+  const output = execFileSync("node", [cli, "discover", "--skip-verify", "--limit", "1", "--json"], { cwd, encoding: "utf8" });
+  const result = JSON.parse(output);
+
+  assert.equal(result.tasks.length, 1);
+  assert.equal(result.tasks[0].title, "Fix flaky smoke test");
+  assert.equal(result.tasks[0].source, "board");
+  assert.ok(fs.existsSync(path.join(cwd, ".ctxcarry", "discovery", "latest.json")));
+  assert.match(fs.readFileSync(path.join(cwd, ".ctxcarry", "discovery", "latest.md"), "utf8"), /Fix flaky smoke test/);
+});
+
+test("loop can run from discovery", () => {
+  const cwd = makeTempDir();
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-bin-"));
+  const evaluatorInstructions = path.join(cwd, "seen-evaluator-instructions.txt");
+  fs.writeFileSync(
+    path.join(bin, "ctxcarry"),
+    `#!/bin/sh
+if [ "$1" = "setup" ]; then
+  exit 0
+fi
+if [ "$1" = "run" ]; then
+  exit 0
+fi
+exec node "${cli}" "$@"
+`,
+  );
+  fs.writeFileSync(
+    path.join(bin, "codex"),
+    `#!/bin/sh
+printf "%s" "$CTXCARRY_EVALUATOR_INSTRUCTIONS" > "${evaluatorInstructions}"
+printf "PASS\\n" > "$CTXCARRY_VERDICT_PATH"
+`,
+  );
+  fs.chmodSync(path.join(bin, "ctxcarry"), 0o755);
+  fs.chmodSync(path.join(bin, "codex"), 0o755);
+
+  fs.writeFileSync(path.join(cwd, "package.json"), JSON.stringify({ scripts: { test: "node -e \"process.exit(0)\"" } }, null, 2));
+  fs.writeFileSync(path.join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+  execFileSync("git", ["init"], { cwd, stdio: "ignore" });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd });
+  execFileSync("git", ["add", "package.json", "pnpm-lock.yaml"], { cwd });
+  execFileSync("git", ["commit", "-m", "init"], { cwd, stdio: "ignore" });
+  execFileSync("node", [cli, "setup"], { cwd });
+  fs.writeFileSync(path.join(cwd, ".ctxcarry", "board.md"), "# ctxcarry Board\n\n| Status | Task | Updated |\n| --- | --- | --- |\n| Todo | Inspect discovered task | 2026-01-01T00:00:00.000Z |\n");
+
+  execFileSync("node", [cli, "loop", "--from-discovery", "--generator", "codex", "--evaluator", "codex"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+    encoding: "utf8",
+  });
+
+  assert.match(fs.readFileSync(evaluatorInstructions, "utf8"), /Inspect discovered task/);
+  assert.match(fs.readFileSync(path.join(cwd, ".ctxcarry", "board.md"), "utf8"), /Done/);
+});
+
+test("schedule install writes launchd plist under HOME", () => {
+  const cwd = makeTempDir();
+  const home = makeTempDir();
+  execFileSync("node", [cli, "init"], { cwd });
+
+  execFileSync("node", [cli, "schedule", "install", "--every", "30m", "--limit", "2", "--timeout-seconds", "300"], {
+    cwd,
+    env: { ...process.env, HOME: home },
+  });
+
+  const plistPath = path.join(home, "Library", "LaunchAgents", "com.ctxcarry.local-loop.plist");
+  const plist = fs.readFileSync(plistPath, "utf8");
+  assert.match(plist, /StartInterval/);
+  assert.match(plist, /1800/);
+  assert.match(plist, /--limit/);
+  assert.match(plist, /--timeout-seconds/);
+  assert.match(plist, /300/);
+});
+
+test("schedule forwards loop options to loop runs", () => {
+  const cwd = makeTempDir();
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "ctxcarry-bin-"));
+  const seen = path.join(cwd, "schedule-commands.log");
+  fs.writeFileSync(
+    path.join(bin, "ctxcarry"),
+    `#!/bin/sh
+printf "%s\\n" "$*" >> "${seen}"
+exit 0
+`,
+  );
+  fs.chmodSync(path.join(bin, "ctxcarry"), 0o755);
+  execFileSync("node", [cli, "init"], { cwd });
+
+  execFileSync("node", [cli, "schedule", "run", "--limit", "1", "--allow-dirty", "--generator", "codex", "--evaluator", "codex", "--timeout-seconds", "5"], {
+    cwd,
+    env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+  });
+
+  const commands = fs.readFileSync(seen, "utf8");
+  assert.match(commands, /discover/);
+  assert.match(commands, /loop --from-discovery --limit 1 --allow-dirty --generator codex --evaluator codex/);
 });
 
 function writeAgentScript(cwd, source) {

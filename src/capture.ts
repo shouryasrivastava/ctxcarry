@@ -30,7 +30,7 @@ export function captureSnapshot(agent?: string): GitSnapshot {
   return snapshot;
 }
 
-export async function runAgent(agent: string): Promise<RunSessionResult> {
+export async function runAgent(agent: string, prompt?: string): Promise<RunSessionResult> {
   const config = readConfig();
   const agentConfig = config.agents[agent];
   if (!agentConfig?.enabled) {
@@ -67,7 +67,7 @@ export async function runAgent(agent: string): Promise<RunSessionResult> {
     diffStat: before.diffStat
   });
 
-  const exitCode = await spawnInteractive(command, sessionDir, instructionsPath, summaryPath);
+  const exitCode = await spawnInteractive(command, sessionDir, instructionsPath, summaryPath, agentPromptArgs(agent, prompt));
   const endedAtMs = Date.now();
   const endedAt = new Date(endedAtMs).toISOString();
   const after = getGitSnapshot();
@@ -238,10 +238,11 @@ function listContent(section = ""): string[] {
     .filter(Boolean);
 }
 
-function spawnInteractive(command: string, sessionDir: string, instructionsPath: string, summaryPath: string): Promise<number> {
+function spawnInteractive(command: string, sessionDir: string, instructionsPath: string, summaryPath: string, extraArgs: string[] = []): Promise<number> {
   const [bin, ...args] = splitCommand(command);
+  const spawnArgs = [...args, ...extraArgs];
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, {
+  const child = spawn(bin, spawnArgs, {
       cwd: process.cwd(),
       env: {
         ...process.env,
@@ -280,6 +281,13 @@ function statusFiles(status: string[], codes: string[]): string[] {
 function splitCommand(command: string): string[] {
   const parts = command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
   return parts.map((part) => part.replace(/^["']|["']$/g, ""));
+}
+
+function agentPromptArgs(agent: string, prompt?: string): string[] {
+  if (!prompt) return [];
+  if (agent === "claude") return ["-p", prompt];
+  if (agent === "codex") return ["exec", prompt];
+  return [prompt];
 }
 
 function unique(values: string[]): string[] {

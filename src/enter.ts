@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { compileAgent } from "./compile.js";
 import { compactState } from "./distill.js";
 import { rootPath } from "./paths.js";
-import { readConfig, writeManagedFile } from "./store.js";
+import { readConfig } from "./store.js";
 import type { ParsedArgsLike } from "./setup.js";
 
 export function enterCommand(args: ParsedArgsLike): void {
@@ -24,9 +24,8 @@ export function enterCommand(args: ParsedArgsLike): void {
 
   const config = readConfig();
   compactState();
-  const handoff = compileAgent(agent, config.default_budget_tokens);
+  compileAgent(agent, config.default_budget_tokens);
   if (instructionPath) {
-    writeManagedFile(instructionPath, handoff);
     console.log(`Updated ${instructionPath}`);
   }
   console.log(`Prepared ${agent} handoff.`);

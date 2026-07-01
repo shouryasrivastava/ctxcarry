@@ -140,7 +140,7 @@ export function writeHandoff(agent: string, markdown: string): string {
 }
 
 export function writeManagedFile(filePath: string, markdown: string): void {
-  const absolutePath = rootPath(filePath);
+  const absolutePath = path.isAbsolute(filePath) ? filePath : rootPath(filePath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
   const start = "<!-- ctxcarry:start -->";
   const end = "<!-- ctxcarry:end -->";

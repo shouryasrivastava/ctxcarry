@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 
+import { printBanner } from "./banner.js";
 import { ctxcarryPath, rootPath } from "./paths.js";
 import { defaultConfig, initStore, readConfig } from "./store.js";
 import type { ctxcarryConfig } from "./types.js";
@@ -11,6 +12,7 @@ export interface ParsedArgsLike {
 }
 
 export function setupCommand(args: ParsedArgsLike): void {
+  printBanner();
   initStore();
   ensureBoard();
 

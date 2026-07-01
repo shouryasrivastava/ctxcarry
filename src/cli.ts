@@ -7,10 +7,13 @@ import { serveMcp } from "./mcp-server.js";
 import { estimateSavings, estimateTokens } from "./tokens.js";
 import { appendEvent, ctxcarryDirName, ensureInitialized, initStore, readState } from "./store.js";
 import { setupCommand } from "./setup.js";
+import { printBanner } from "./banner.js";
 import { enterCommand } from "./enter.js";
 import { verifyCommand } from "./verify.js";
 import { worktreeCommand } from "./worktree.js";
 import { loopCommand } from "./loop.js";
+import { discoverCommand } from "./discover.js";
+import { scheduleCommand } from "./schedule.js";
 import { boardCommand } from "./board.js";
 
 interface ParsedArgs {
@@ -31,6 +34,7 @@ async function main(): Promise<void> {
         printHelp();
         return;
       case "init":
+        printBanner();
         initStore();
         console.log(`Initialized ${ctxcarryDirName()}/ and ctxcarry.config.json`);
         return;
@@ -48,7 +52,8 @@ async function main(): Promise<void> {
       case "run":
         ensureInitialized();
         {
-          const result = await runAgent(requiredPositional(args, 0, "agent"));
+          const prompt = typeof args.flags.prompt === "string" ? args.flags.prompt : undefined;
+          const result = await runAgent(requiredPositional(args, 0, "agent"), prompt);
           console.log(`Recorded session ${result.sessionId}.`);
           console.log(`Session files: ${result.sessionDir}`);
           process.exitCode = result.exitCode;
@@ -81,6 +86,14 @@ async function main(): Promise<void> {
       case "loop":
         ensureInitialized();
         loopCommand(args);
+        return;
+      case "discover":
+        ensureInitialized();
+        discoverCommand(args);
+        return;
+      case "schedule":
+        ensureInitialized();
+        scheduleCommand(args);
         return;
       case "board":
         ensureInitialized();
@@ -187,6 +200,10 @@ Usage:
   ctxcarry compact
   ctxcarry compile --agent codex|claude [--budget 4000]
   ctxcarry switch <agent> [--budget 4000]
+  ctxcarry discover [--limit 10] [--json]
+  ctxcarry loop --task "..." --generator claude --evaluator codex
+  ctxcarry loop --from-discovery [--limit 1]
+  ctxcarry schedule <install|uninstall|status|run>
   ctxcarry status
   ctxcarry tokens [--agent codex] [--budget 4000]
   ctxcarry learn [--apply]
